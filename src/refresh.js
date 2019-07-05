@@ -4,7 +4,10 @@ const k8sClient = getClient();
 const k8sGatewayDeployment = process.env.GATEWAY_DEPLOYMENT || 'k8s-gateway';
 
 k8sClient.refreshDeployment(k8sGatewayDeployment)
-  .then(() => process.exit())
+  .then((deployment) => {
+    console.log(JSON.stringify(deployment, null, 2));
+    process.exit();
+  })
   .catch((err) => {
     console.log(err);
     process.exit(1);

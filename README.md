@@ -41,4 +41,5 @@ kgw () {
 ```
 npm run build
 docker build -t tungph/k8s-gateway .
+docker push tungph/k8s-gateway
 ```
