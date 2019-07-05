@@ -1,0 +1,9 @@
+{
+  "image": "jupyter/minimal-notebook",
+  "imagePullPolicy": "IfNotPresent",
+  "name": "notebook",
+  "ports": [{
+    "containerPort": 8888
+  }],
+  "command": ["tini", "-g", "--", "jupyter", "notebook"]
+}

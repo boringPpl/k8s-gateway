@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: k8s-gateway
+  labels: {}
+  namespace: hasbrain
+spec:
+  dnsPolicy: ClusterFirst
+  hostNetwork: false
+  imagePullSecrets: []
+  serviceAccountName: flownote
+  containers:
+  - image: k8s-gateway
+    imagePullPolicy: IfNotPresent
+    name: gateway
+    env:
+    - name: FLOWNOTE_SERVER
+      value: ""

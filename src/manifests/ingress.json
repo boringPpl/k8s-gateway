@@ -1,0 +1,14 @@
+{
+  "apiVersion": "extensions/v1beta1",
+  "kind": "Ingress",
+  "metadata": {
+    "namespace": "hasbrain"
+  },
+  "spec": {
+    "rules": [],
+    "tls": [{
+      "hosts": ["*.kernel.hasbrain.com"],
+      "secretName": "kernel-tls"
+    }]
+  }
+}

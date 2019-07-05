@@ -1,0 +1,14 @@
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "namespace": "hasbrain",
+    "labels": {}
+  },
+  "spec": {
+    "containers": [],
+    "dnsPolicy": "ClusterFirst",
+    "hostNetwork": false,
+    "imagePullSecrets": []
+  }
+}

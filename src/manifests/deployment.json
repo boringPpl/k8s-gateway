@@ -1,0 +1,26 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "flownote-deployment",
+    "labels": {
+      "app": "flownote"
+    }
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "app": "flownote"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "flownote"
+        }
+      },
+      "spec": {}
+    }
+  }
+}
