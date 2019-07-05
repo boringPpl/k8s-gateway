@@ -21,11 +21,13 @@ export const initClient = () => {
   const clientApiV1 = client.api.v1.namespaces(namespace);
   const clientApiV1Watch = client.api.v1.watch.namespaces(namespace);
   const clientApisExtensionsV1Beta1 = client.apis.extensions.v1beta1.namespaces(namespace);
+  const clientApisAppsV1Beta1 = client.apis.apps.v1beta1.namespaces(namespace);
 
   // TODO: Must match manifest version
   clients.pods = clientApiV1.pods;
   clients.services = clientApiV1.services;
   clients.ingresses = clientApisExtensionsV1Beta1.ingresses;
+  clients.deployments = clientApisAppsV1Beta1.deployments;
   clients.watch = clientApiV1Watch;
 };
 
@@ -138,3 +140,18 @@ export const getKernels = ({
     const items = get('body.items')(resp) || [];
     return { data: items.map(transform) };
   });
+
+export const refreshDeployment = (name) => {
+  const updatedAt = Date.now().toString();
+  const body = {
+    spec: {
+      template: {
+        metadata: {
+          labels: { updatedAt },
+        },
+      },
+    },
+  };
+
+  return clients.deployments(name).patch({ body });
+};

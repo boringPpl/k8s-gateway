@@ -1,0 +1,19 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: refresh-gateway
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: flownote
+          containers:
+          - name: refresh-gateway
+            image: tungph/k8s-gateway
+            args:
+            - /bin/sh
+            - -c
+            - node dist/refresh.js
+          restartPolicy: OnFailure
