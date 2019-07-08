@@ -13,7 +13,7 @@ describe('V1', () => {
     after(() => requester.close());
 
     describe('Create', () => {
-      it.only('Create', (done) => {
+      it('Create', (done) => {
         // notebookPath to construct url(default to podName)
         const pod = {
           metadata: {
@@ -83,7 +83,7 @@ describe('V1', () => {
     });
 
     describe('Get One', () => {
-      it.only('OK', (done) => {
+      it('OK', (done) => {
         const pod = {
           metadata: {
             name: 'test3',

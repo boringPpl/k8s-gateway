@@ -80,6 +80,8 @@ export const getMetadata = flow(
 );
 
 export const transform = kernel => ({
+  name: get('metadata.name')(kernel),
+  notebookPath: get('metadata.labels.notebookPath')(kernel),
+  ...statusToPhase(kernel),
   metadata: getMetadata(kernel),
-  phase: statusToPhase(kernel),
 });

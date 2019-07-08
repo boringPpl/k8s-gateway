@@ -22,6 +22,6 @@ export const createKernel = ({ pod, service, ingress }) => {
 };
 
 export const deleteKernel = () => Promise.resolve();
-export const getKernel = () => Promise.resolve({ metadata: { name: 'test' }, status: 'RUNNING' });
-export const getKernels = () => Promise.resolve({ data: [{ metadata: { name: 'test' }, status: 'RUNNING' }] });
+export const getKernel = () => Promise.resolve({ metadata: { name: 'test' }, phase: 'RUNNING', notebookPath: '' });
+export const getKernels = () => Promise.resolve({ data: [{ metadata: { name: 'test' }, phase: 'RUNNING', notebookPath: '' }] });
 export const refreshDeployment = () => Promise.resolve({});
