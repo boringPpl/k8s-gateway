@@ -98,7 +98,8 @@ export const createKernel = ({ pod, service, ingress }) => {
   const watchStatus = {
     exec: (kernel) => {
       const podName = get('pod.metadata.name')(kernel);
-      return watchKernel(podName, updateKernelStatus).then(() => kernel);
+      return watchKernel(podName, updateKernelStatus)
+        .then(() => ({ ...transform(kernel.pod), phase: 'PENDING' }));
     },
   };
 

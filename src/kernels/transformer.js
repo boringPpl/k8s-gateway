@@ -46,7 +46,7 @@ const containerTerminated = flow(
 
 const outOfResourcesPhase = (status) => {
   const portCollisionMessage = 'free ports for the requested pod ports';
-  const message = podScheduledMessage(status);
+  const message = podScheduledMessage(status) || '';
   const phase = message.includes(portCollisionMessage) ? 'PORT_COLLISION' : 'OUT_OF_RESOURCES';
   return { phase, message };
 };
@@ -59,6 +59,7 @@ export const statusToPhase = ({ type, status }) => {
 
   switch (phase) {
     case 'Pending':
+      if (!get('conditions')(status)) return { phase: 'PENDING' };
       if (!podScheduled(status)) return outOfResourcesPhase(status);
       if (!imagePulled(status)) return { phase: 'PULLING_IMAGE' };
       if (!containersReady(status)) return { phase: 'STARTING_CONTAINER', message: containersReadyMessage(status) };
@@ -80,8 +81,8 @@ export const getMetadata = flow(
 );
 
 export const transform = kernel => ({
+  metadata: getMetadata(kernel),
   name: get('metadata.name')(kernel),
   notebookPath: get('metadata.labels.notebookPath')(kernel),
   ...statusToPhase(kernel),
-  metadata: getMetadata(kernel),
 });

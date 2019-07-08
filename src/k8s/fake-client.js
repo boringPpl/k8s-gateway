@@ -1,5 +1,6 @@
 import { get, assign } from 'lodash/fp';
 import { build } from './manifest-builder';
+import { transform } from '../kernels/transformer';
 
 export const createKernel = ({ pod, service, ingress }) => {
   const kernel = build({ pod });
@@ -18,10 +19,13 @@ export const createKernel = ({ pod, service, ingress }) => {
     return Promise.reject(new Error('Missing Ingress Name'));
   }
 
-  return Promise.resolve(kernel);
+  return Promise.resolve({
+    ...transform(kernel.pod),
+    phase: 'PENDING',
+  });
 };
 
 export const deleteKernel = () => Promise.resolve();
-export const getKernel = () => Promise.resolve({ metadata: { name: 'test' }, phase: 'RUNNING', notebookPath: '' });
-export const getKernels = () => Promise.resolve({ data: [{ metadata: { name: 'test' }, phase: 'RUNNING', notebookPath: '' }] });
+export const getKernel = () => Promise.resolve(transform({ metadata: { name: 'test' } }));
+export const getKernels = () => Promise.resolve({ data: [transform({ metadata: { name: 'test' } })] });
 export const refreshDeployment = () => Promise.resolve({});
