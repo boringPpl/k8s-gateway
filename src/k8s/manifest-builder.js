@@ -6,6 +6,7 @@ import defaultPod from '../manifests/pod.json';
 import defaultContainer from '../manifests/container.json';
 import defaultService from '../manifests/service.json';
 import defaultIngress from '../manifests/ingress.json';
+import defaultSecret from '../manifests/secret.json';
 
 const defaultPort = {
   protocol: 'TCP',
@@ -19,6 +20,11 @@ const defaultNotebookArgs = [
 ];
 
 export const buildPod = ({ metadata, container, spec }) => {
+  const labels = assign(
+    get('metadata.labels')(defaultPod),
+    get('labels')(metadata),
+  );
+
   const notebookArgs = flow(
     concat(defaultNotebookArgs),
     filter(i => i),
@@ -34,6 +40,7 @@ export const buildPod = ({ metadata, container, spec }) => {
 
   return flow(
     set('metadata', assign(defaultPod.metadata)(metadata)),
+    set('metadata.labels', labels),
     set('spec', assign(defaultPod.spec)(newSpec)),
   )(defaultPod);
 };
@@ -102,4 +109,14 @@ export const build = (options) => {
     const manifest = buildManifest ? buildManifest(params) : params;
     return assign(rs)({ [key]: manifest });
   }, {});
+};
+
+export const buildSecret = ({ name, data, type = 'Opaque' }) => {
+  const secretMetadata = assign(defaultSecret.metadata)({ name });
+
+  return flow(
+    set('metadata', secretMetadata),
+    set('data', data),
+    set('type', type),
+  )(defaultSecret);
 };

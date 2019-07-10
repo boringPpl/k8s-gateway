@@ -3,7 +3,9 @@
   "kind": "Pod",
   "metadata": {
     "namespace": "hasbrain",
-    "labels": {}
+    "labels": {
+      "type": "KERNEL"
+    }
   },
   "spec": {
     "containers": [],

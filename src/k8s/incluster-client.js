@@ -4,7 +4,7 @@ import {
   get, assign,
 } from 'lodash/fp';
 
-import { build } from './manifest-builder';
+import { build, buildSecret } from './manifest-builder';
 import retry from '../utils/retry';
 import rollbackWaterFall from '../utils/rollback-waterfall';
 import { updateKernelStatus } from '../webhooks/flownote';
@@ -28,6 +28,7 @@ export const initClient = () => {
   clients.services = clientApiV1.services;
   clients.ingresses = clientApisExtensionsV1Beta1.ingresses;
   clients.deployments = clientApisAppsV1Beta1.deployments;
+  clients.secrets = clientApiV1.secrets;
   clients.watch = clientApiV1Watch;
 };
 
@@ -156,3 +157,16 @@ export const refreshDeployment = (name) => {
 
   return clients.deployments(name).patch({ body });
 };
+
+export const upsertSecret = (name, body) => {
+  const secretBody = buildSecret({ ...body, name });
+
+  return clients.secrets(name).get()
+    .then(() => clients.secrets(name).put({ body: secretBody }))
+    .catch((err) => {
+      if (!err.message.includes('not found')) return Promise.reject(err);
+      return clients.secrets.post({ body: secretBody });
+    });
+};
+
+export const deleteSecret = name => clients.secrets(name).delete();

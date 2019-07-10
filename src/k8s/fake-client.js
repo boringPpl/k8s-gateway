@@ -1,5 +1,5 @@
 import { get, assign } from 'lodash/fp';
-import { build } from './manifest-builder';
+import { build, buildSecret } from './manifest-builder';
 import { transform } from '../kernels/transformer';
 
 export const createKernel = ({ pod, service, ingress }) => {
@@ -29,3 +29,5 @@ export const deleteKernel = () => Promise.resolve();
 export const getKernel = () => Promise.resolve(transform({ metadata: { name: 'test' } }));
 export const getKernels = () => Promise.resolve({ data: [transform({ metadata: { name: 'test' } })] });
 export const refreshDeployment = () => Promise.resolve({});
+export const upsertSecret = (name, body) => Promise.resolve(buildSecret({ ...body, name }));
+export const deleteSecret = name => Promise.resolve({ name });

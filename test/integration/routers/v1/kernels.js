@@ -1,17 +1,8 @@
-import chai from 'chai';
-import chaiHttp from 'chai-http';
-
-import server from '../../../../src/index';
+import { requester, expect } from '../../../utils/chai-tools';
 import { getMessage } from '../../../utils/error-response';
-
-chai.use(chaiHttp);
-const requester = chai.request(server).keepOpen();
-const { expect } = chai;
 
 describe('V1', () => {
   describe('Kernels', () => {
-    after(() => requester.close());
-
     describe('Create', () => {
       it('Create', (done) => {
         // notebookPath to construct url(default to podName)

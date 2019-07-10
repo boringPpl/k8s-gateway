@@ -2,6 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 
 import kernels from './routers/v1/kernels';
+import secrets from './routers/v1/secrets';
 
 const app = express();
 const { EXPRESS_PORT, VALID_ORIGINS } = process.env;
@@ -43,6 +44,7 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => res.sendStatus(200));
 app.use('/v1/kernels', kernels);
+app.use('/v1/secrets', secrets);
 
 const server = app.listen(port);
 
