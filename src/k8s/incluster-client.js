@@ -1,17 +1,15 @@
 import { Client } from 'kubernetes-client';
 import Request from 'kubernetes-client/backends/request';
 import {
-  get, assign,
+  get, assign, flow, pick, toString, mapValues,
 } from 'lodash/fp';
 
 import { build, buildSecret } from './manifest-builder';
-import retry from '../utils/retry';
 import rollbackWaterFall from '../utils/rollback-waterfall';
 import { updateKernelStatus } from '../webhooks/flownote';
 import { transform } from '../kernels/transformer';
 
 const namespace = process.env.NAMESPACE || 'hasbrain';
-const kernelRetry = retry({ delay: 2, retries: 2 });
 const clients = {};
 
 export const initClient = () => {
@@ -191,3 +189,17 @@ export const cleanKernels = () => clients.pods.get({
 
     return Promise.all(actions);
   });
+
+export const updateKernel = (name, fields) => {
+  const allowedUpdates = ['shutdownTime'];
+  const body = {
+    metadata: {
+      labels: flow(
+        pick(allowedUpdates),
+        mapValues(toString),
+      )(fields),
+    },
+  };
+
+  return clients.pods(name).patch({ body });
+};

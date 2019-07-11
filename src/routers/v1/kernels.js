@@ -11,6 +11,12 @@ router.post('/', (req, res) => {
     .catch(err => res.status(422).json({ message: err.message }));
 });
 
+router.patch('/:name', (req, res) => {
+  k8sClient.updateKernel(req.params.name, req.body)
+    .then(rs => res.json(rs))
+    .catch(err => res.status(422).json({ message: err.message }));
+});
+
 router.delete('/:name', (req, res) => {
   k8sClient.deleteKernel(req.params.name, req.body)
     .then(rs => res.json(rs))
