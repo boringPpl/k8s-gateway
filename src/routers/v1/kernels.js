@@ -29,4 +29,27 @@ router.get('/', (req, res) => {
     .catch(err => res.status(404).json({ message: err.message }));
 });
 
+const formatSSE = data => `data: ${data}\n\n`;
+
+router.get('/:name/watch', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  });
+  res.write('\n');
+
+  k8sClient.watchKernel(req.params.name, {
+    onData: (kernel) => {
+      const data = formatSSE(JSON.stringify(kernel));
+      res.write(data);
+    },
+  })
+    .then(stream => req.on('close', () => stream.destroy()))
+    .catch((err) => {
+      console.log(err);
+      res.end();
+    });
+});
+
 export default router;

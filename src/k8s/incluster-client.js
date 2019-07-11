@@ -8,7 +8,7 @@ import { build, buildSecret } from './manifest-builder';
 import retry from '../utils/retry';
 import rollbackWaterFall from '../utils/rollback-waterfall';
 import { updateKernelStatus } from '../webhooks/flownote';
-import { statusToPhase, transform } from '../kernels/transformer';
+import { transform } from '../kernels/transformer';
 
 const namespace = process.env.NAMESPACE || 'hasbrain';
 const kernelRetry = retry({ delay: 2, retries: 2 });
@@ -34,20 +34,19 @@ export const initClient = () => {
 
 const defaultStopPhases = ['DELETED', 'FAILED', 'SUCCEEDED', 'UNKNOWN'];
 
-export const watchKernel = (podName, react, stopPhases = defaultStopPhases) => clients.watch
-  .pods(podName)
+export const watchKernel = (podName, { onData, shouldDestroy }) => clients.watch.pods(podName)
   .getObjectStream()
   .then(stream => new Promise((resolve, reject) => {
     let resolved = false;
     stream.on('data', ({ type, object }) => {
-      if (type === 'ADDED') {
+      if (!resolved) {
         resolved = true;
-        resolve();
+        resolve(stream);
       }
 
-      const phaseObj = statusToPhase({ type, status: object.status });
-      if (stopPhases.includes(phaseObj.phase)) stream.destroy();
-      if (react) react(object, phaseObj);
+      const kernel = transform({ ...object, type });
+      if (shouldDestroy && shouldDestroy(kernel)) stream.destroy();
+      onData(kernel);
     });
 
     stream.on('error', (err) => {
@@ -99,7 +98,11 @@ export const createKernel = ({ pod, service, ingress }) => {
   const watchStatus = {
     exec: (kernel) => {
       const podName = get('pod.metadata.name')(kernel);
-      return watchKernel(podName, updateKernelStatus)
+
+      return watchKernel(podName, {
+        onData: updateKernelStatus,
+        shouldDestroy: ({ phase }) => defaultStopPhases.includes(phase),
+      })
         .then(() => ({ ...transform(kernel.pod), phase: 'PENDING' }));
     },
   };
@@ -112,14 +115,15 @@ export const createKernel = ({ pod, service, ingress }) => {
   ]);
 };
 
-export const deleteKernel = (podName, { serviceName, ingressName }) => {
+export const deleteKernel = (podName, options = {}) => {
   if (!podName) return Promise.reject(new Error('Missing Pod Name'));
+  const { serviceName, ingressName } = options;
 
   return clients.pods(podName).delete()
-    .then(() => {
-      kernelRetry({ exec: () => clients.services(serviceName || podName).delete() });
-      kernelRetry({ exec: () => clients.ingresses(ingressName || podName).delete() });
-    });
+    .then(() => Promise.all([
+      clients.services(serviceName || podName).delete().catch(console.log),
+      clients.ingresses(ingressName || podName).delete().catch(console.log),
+    ]));
 };
 
 export const getKernel = (podName) => {
@@ -170,3 +174,20 @@ export const upsertSecret = (name, body) => {
 };
 
 export const deleteSecret = name => clients.secrets(name).delete();
+
+export const cleanKernels = () => clients.pods.get({
+  qs: { labelSelector: 'type=KERNEL' },
+})
+  .then((resp) => {
+    const items = get('body.items')(resp) || [];
+    const actions = items.reduce((rs, item) => {
+      const { metadata: { name, labels } } = item;
+      const shutdownTime = parseInt(get('shutdownTime')(labels), 10);
+      if (shutdownTime && shutdownTime <= Date.now()) {
+        rs.push(deleteKernel(name).catch(() => {}));
+      }
+      return rs;
+    }, []);
+
+    return Promise.all(actions);
+  });

@@ -8,7 +8,7 @@
     "build": "babel src --out-dir dist --copy-files",
     "test": "NODE_ENV=test mocha --recursive --watch --require @babel/register test",
     "dev": "nodemon --exec babel-node src/index.js",
-    "hit": "NODE_ENV=hit mocha --recursive --watch --require @babel/register test/integration"
+    "hit": "NODE_ENV=hit mocha --recursive --require @babel/register test/integration"
   },
   "author": "",
   "license": "ISC",

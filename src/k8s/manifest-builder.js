@@ -26,13 +26,18 @@ export const buildPod = ({ metadata, container, spec }) => {
   );
 
   const notebookArgs = flow(
+    get('args'),
     concat(defaultNotebookArgs),
     filter(i => i),
-  )(container.args);
+  )(container);
+
+  const portPath = 'ports[0].containerPort';
+  const port = get(portPath)(container) || get(portPath)(defaultContainer);
 
   const containers = flow(
     assign(container),
     assign(defaultContainer),
+    set('readinessProbe.httpGet.port', port),
     concat([]),
   )({ args: notebookArgs });
 

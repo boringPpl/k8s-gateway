@@ -51,8 +51,15 @@ const outOfResourcesPhase = (status) => {
   return { phase, message };
 };
 
-export const statusToPhase = ({ type, status }) => {
+export const getShutdownTime = obj => parseInt(
+  get('metadata.labels.shutdownTime')(obj),
+  10,
+);
+
+export const statusToPhase = ({ type, status, metadata }) => {
   if (type === 'DELETED') return { phase: 'DELETED' };
+  const shutdownTime = getShutdownTime({ metadata });
+  if (shutdownTime && shutdownTime < Date.now()) return { phase: 'DELETED' };
   if (containerTerminated(status)) return { phase: 'DELETED' };
 
   const phase = get('phase')(status);
@@ -81,8 +88,10 @@ export const getMetadata = flow(
 );
 
 export const transform = kernel => ({
-  metadata: getMetadata(kernel),
+  metadata: get('metadata')(kernel),
+  profileId: get('metadata.labels.profileId')(kernel),
   name: get('metadata.name')(kernel),
   notebookPath: get('metadata.labels.notebookPath')(kernel),
+  shutdownTime: getShutdownTime(kernel),
   ...statusToPhase(kernel),
 });

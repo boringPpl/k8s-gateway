@@ -12,6 +12,7 @@ describe('V1', () => {
             labels: {
               profileId: 'tung',
               notebookPath: 'test',
+              shutdownTime: (Date.now() + 10000).toString(),
             },
           },
           container: {
