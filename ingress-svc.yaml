@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: haproxy-ingress-svc
+  namespace: ingress-controller
+  labels:
+    app.kubernetes.io/name: haproxy-ingress
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+      nodePort: 30008
+  selector:
+    run: haproxy-ingress

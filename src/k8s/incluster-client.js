@@ -32,7 +32,8 @@ export const initClient = () => {
 
 const defaultStopPhases = ['DELETED', 'FAILED', 'SUCCEEDED', 'UNKNOWN'];
 
-export const watchKernel = (podName, { onData, shouldDestroy }) => clients.watch.pods(podName)
+export const watchKernel = (podName, { onData, shouldDestroy }) => clients.watch
+  .pods(podName)
   .getObjectStream()
   .then(stream => new Promise((resolve, reject) => {
     let resolved = false;

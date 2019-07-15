@@ -1,6 +1,7 @@
 import {
-  get, set, flow, assign, concat, filter,
+  get, set, flow, assign, concat, filter, pick,
 } from 'lodash/fp';
+import crypto from 'crypto';
 
 import defaultPod from '../manifests/pod.json';
 import defaultContainer from '../manifests/container.json';
@@ -14,20 +15,25 @@ const defaultPort = {
 };
 
 const defaultNotebookArgs = [
-  '--NotebookApp.token=',
   '--NotebookApp.allow_origin=*',
   '--NotebookApp.disable_check_xsrf=True',
 ];
 
+const generateToken = () => crypto.randomBytes(16).toString('hex');
+
 export const buildPod = ({ metadata, container, spec }) => {
-  const labels = assign(
-    get('metadata.labels')(defaultPod),
-    get('labels')(metadata),
-  );
+  const token = generateToken();
+  const defaultLabels = get('metadata.labels')(defaultPod);
+  const labels = flow(
+    get('labels'),
+    assign(defaultLabels),
+    set('token', token),
+  )(metadata);
 
   const notebookArgs = flow(
     get('args'),
     concat(defaultNotebookArgs),
+    concat([`--NotebookApp.token=${token}`]),
     filter(i => i),
   )(container);
 
@@ -54,7 +60,10 @@ export const buildService = ({
   metadata, port, spec, pod,
 }) => {
   const svcMetadata = assign({ name: get('metadata.name')(pod) })(metadata);
-  const selector = get('metadata.labels')(pod);
+  const selector = flow(
+    get('metadata.labels'),
+    pick(['notebookPath']),
+  )(pod);
   const targetPort = get('spec.containers[0].ports[0].containerPort')(pod);
   const ports = flow(
     assign({ targetPort }),
@@ -70,23 +79,28 @@ export const buildService = ({
   )(defaultService);
 };
 
+const ingressOption = (type, serviceName) => {
+  // haproxy
+  if (!type) return { rewriteKey: 'ingress.kubernetes.io/rewrite-target', rewrite: '/', path: `/${serviceName}` };
+  // nginx
+  return { rewriteKey: 'nginx.ingress.kubernetes.io/rewrite-target', rewrite: '/', path: `/${serviceName}(/|$)(.*)` };
+};
+
 export const buildIngress = ({
-  metadata, host, spec, service,
+  metadata, host, ingressType, spec, service,
 }) => {
   const serviceName = get('metadata.name')(service);
   const ingressMetadata = assign({ name: serviceName, annotations: {} })(metadata);
   const ruleExists = get('rules')(spec);
-  if (!ruleExists) {
-    const rewriteTarget = 'nginx.ingress.kubernetes.io/rewrite-target';
-    ingressMetadata.annotations[rewriteTarget] = '/$2';
-  }
+  const { rewriteKey, rewrite, path } = ingressOption(ingressType, serviceName);
+  if (!ruleExists) ingressMetadata.annotations[rewriteKey] = rewrite;
 
   const servicePort = get('spec.ports[0].port')(service);
   const rule = {
     host,
     http: {
       paths: [{
-        path: `/${serviceName}(/|$)(.*)`,
+        path,
         backend: { serviceName, servicePort },
       }],
     },

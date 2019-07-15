@@ -5,8 +5,8 @@
   "ports": [{ "containerPort": 8888 }],
   "command": ["tini", "-g", "--", "jupyter", "notebook"],
   "readinessProbe": {
-    "initialDelaySeconds": 2,
-    "periodSeconds": 2,
+    "initialDelaySeconds": 1,
+    "periodSeconds": 1,
     "successThreshold": 1,
     "httpGet": {
       "path": "/api"
