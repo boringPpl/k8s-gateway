@@ -1,0 +1,38 @@
+{
+  "apiVersion": "apps/v1beta2",
+  "kind": "DaemonSet",
+  "metadata": {
+    "name": "daemonset-name"
+  },
+  "spec": {
+    "selector": {
+      "matchLabels": {
+        "name": "prepull"
+      }
+    },
+    "updateStrategy": {
+      "type": "RollingUpdate"
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "name": "prepull"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "daemonset-name",
+            "image": "image-path",
+            "imagePullPolicy": "Always",
+            "command": [
+              "/bin/sh",
+              "-c",
+              "echo haha"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

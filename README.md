@@ -26,7 +26,7 @@ kgw () {
         if [[ $ok -eq 130 ]]; then
             retries=$(( $attempts + 1 ))
             echo cleaning up ...
-            kubectl delete pod,svc,ingress,secret --all -n hasbrain
+            kubectl delete pod,svc,ingress,secret,daemonset --all -n hasbrain
         else
             echo -e "\nretry $retries ..."
             retryTime=$(($retries**2))

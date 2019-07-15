@@ -1,5 +1,12 @@
 import {
-  get, set, flow, assign, concat, filter, pick,
+  get,
+  set,
+  flow,
+  assign,
+  concat,
+  filter,
+  pick,
+  isNil,
 } from 'lodash/fp';
 import crypto from 'crypto';
 
@@ -8,6 +15,7 @@ import defaultContainer from '../manifests/container.json';
 import defaultService from '../manifests/service.json';
 import defaultIngress from '../manifests/ingress.json';
 import defaultSecret from '../manifests/secret.json';
+import defaultDaemonset from '../manifests/daemonset.json';
 
 const defaultPort = {
   protocol: 'TCP',
@@ -138,4 +146,24 @@ export const buildSecret = ({ name, data, type = 'Opaque' }) => {
     set('data', data),
     set('type', type),
   )(defaultSecret);
+};
+
+export const buildDaemonset = ({
+  name, imagePath, containerCommand, secretName,
+}) => {
+  const command = [
+    '/bin/sh',
+    '-c',
+    containerCommand,
+  ];
+  const imagePullSecrets = isNil(secretName) ? undefined : [{
+    name: secretName,
+  }];
+  return flow(
+    set('metadata.name', name),
+    set('spec.template.spec.containers.0.name', name),
+    set('spec.template.spec.containers.0.image', imagePath),
+    set('spec.template.spec.containers.0.command', command),
+    set('spec.template.spec.imagePullSecrets', imagePullSecrets),
+  )(defaultDaemonset);
 };

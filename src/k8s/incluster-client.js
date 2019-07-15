@@ -4,7 +4,7 @@ import {
   get, assign, flow, pick, toString, mapValues,
 } from 'lodash/fp';
 
-import { build, buildSecret } from './manifest-builder';
+import { build, buildSecret, buildDaemonset } from './manifest-builder';
 import rollbackWaterFall from '../utils/rollback-waterfall';
 import { updateKernelStatus } from '../webhooks/flownote';
 import { transform } from '../kernels/transformer';
@@ -20,6 +20,7 @@ export const initClient = () => {
   const clientApiV1Watch = client.api.v1.watch.namespaces(namespace);
   const clientApisExtensionsV1Beta1 = client.apis.extensions.v1beta1.namespaces(namespace);
   const clientApisAppsV1Beta1 = client.apis.apps.v1beta1.namespaces(namespace);
+  const clientApisAppsV1Beta2 = client.apis.apps.v1beta2.namespaces(namespace);
 
   // TODO: Must match manifest version
   clients.pods = clientApiV1.pods;
@@ -28,6 +29,7 @@ export const initClient = () => {
   clients.deployments = clientApisAppsV1Beta1.deployments;
   clients.secrets = clientApiV1.secrets;
   clients.watch = clientApiV1Watch;
+  clients.daemonsets = clientApisAppsV1Beta2.daemonsets;
 };
 
 const defaultStopPhases = ['DELETED', 'FAILED', 'SUCCEEDED', 'UNKNOWN'];
@@ -204,3 +206,30 @@ export const updateKernel = (name, fields) => {
 
   return clients.pods(name).patch({ body });
 };
+
+const updateDaemonset = (body) => {
+  const daemonsetBody = buildDaemonset(body);
+  return clients.daemonsets(body.name).put({
+    body: daemonsetBody,
+  });
+};
+
+export const createDaemonset = (body) => {
+  const daemonsetBody = buildDaemonset(body);
+  return clients.daemonsets.post({
+    body: daemonsetBody,
+  }).catch((err) => {
+    if (err.statusCode === 409) {
+      // conflict -> update
+      return updateDaemonset(body);
+    }
+    return Promise.reject(err);
+  });
+};
+
+export const deleteDaemonset = name => clients.daemonsets(name).delete({
+  qs: {
+    gracePeriodSeconds: 0,
+    propagationPolicy: 'Background',
+  },
+});

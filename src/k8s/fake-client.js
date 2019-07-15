@@ -1,6 +1,6 @@
 import { get, assign } from 'lodash/fp';
 import { remove } from 'lodash';
-import { build, buildSecret } from './manifest-builder';
+import { build, buildSecret, buildDaemonset } from './manifest-builder';
 import { transform } from '../kernels/transformer';
 
 const kernels = [];
@@ -51,4 +51,26 @@ export const updateKernel = (name, body) => {
     kernel[k] = body[k];
   });
   return Promise.resolve(kernel);
+};
+
+const daemonsets = [];
+
+export const createDaemonset = (body) => {
+  const daemonset = buildDaemonset(body);
+  const existedDaemonsetIdx = daemonsets.findIndex(x => x.metadata.name === body.name);
+  if (existedDaemonsetIdx >= 0) {
+    // replace the old one
+    // equivalent to `put` in real client
+    daemonsets.splice(existedDaemonsetIdx, 1, daemonset);
+  } else {
+    daemonsets.push(daemonset);
+  }
+  return Promise.resolve({
+    body: daemonset,
+    statusCode: 201, // created
+  });
+};
+export const deleteDaemonset = (name) => {
+  remove(daemonsets, k => k.name === name);
+  return Promise.resolve();
 };
