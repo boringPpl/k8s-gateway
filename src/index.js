@@ -9,6 +9,8 @@ import daemonsets from './routers/v1/daemonsets';
 const app = express();
 const port = process.env.EXPRESS_PORT || 3000;
 
+app.get('/', (req, res) => res.sendStatus(200));
+
 app.use(cors);
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
@@ -23,7 +25,6 @@ app.use(authorize);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => res.sendStatus(200));
 app.use('/v1/kernels', kernels);
 app.use('/v1/secrets', secrets);
 app.use('/v1/daemonsets', daemonsets);
