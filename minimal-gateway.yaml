@@ -14,6 +14,13 @@ spec:
   - image: k8s-gateway
     imagePullPolicy: IfNotPresent
     name: gateway
+    volumeMounts:
+    - name: flownote-token
+      mountPath: /etc/flownote/token
     env:
     - name: FLOWNOTE_SERVER
       value: ""
+  volumes:
+  - name: flownote-token
+    secret:
+      secretName: flownote-key-pub

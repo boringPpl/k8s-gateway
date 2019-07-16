@@ -30,7 +30,8 @@ describe('V1', () => {
             expect(res, getMessage(res)).to.have.status(200);
             done();
           })
-          .catch(done);
+          .catch(done)
+          .finally(() => requester.delete(`/v1/secrets/${secretName}`));
       });
     });
 
@@ -49,7 +50,8 @@ describe('V1', () => {
             expect(res, getMessage(res)).to.have.status(200);
             done();
           })
-          .catch(done);
+          .catch(done)
+          .finally(() => requester.delete(`/v1/secrets/${secretName}`));
       });
     });
   });
