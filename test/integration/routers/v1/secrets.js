@@ -1,5 +1,6 @@
 import { requester, expect } from '../../../utils/chai-tools';
 import { getMessage } from '../../../utils/error-response';
+import { generateToken } from '../../../utils/token';
 
 describe('V1', () => {
   describe('Secrets', () => {
@@ -33,6 +34,17 @@ describe('V1', () => {
           .catch(done)
           .finally(() => requester.delete(`/v1/secrets/${secretName}`));
       });
+
+      it('ADMIN only', (done) => {
+        requester.put('/v1/secrets/whatever')
+          .set('X-Auth-Token', generateToken({ role: 'MEMBER' }))
+          .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(403);
+            done();
+          })
+          .catch(done);
+      });
     });
 
     describe('Delete', () => {
@@ -52,6 +64,16 @@ describe('V1', () => {
           })
           .catch(done)
           .finally(() => requester.delete(`/v1/secrets/${secretName}`));
+      });
+
+      it('ADMIN only', (done) => {
+        requester.delete('/v1/secrets/whatever')
+          .set('X-Auth-Token', generateToken({ role: 'MEMBER' }))
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(403);
+            done();
+          })
+          .catch(done);
       });
     });
   });

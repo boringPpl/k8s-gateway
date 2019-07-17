@@ -1,5 +1,6 @@
 import { requester, expect } from '../../../utils/chai-tools';
 import { getMessage } from '../../../utils/error-response';
+import { generateToken } from '../../../utils/token';
 
 describe('V1', () => {
   describe('Daemonset', () => {
@@ -50,6 +51,16 @@ describe('V1', () => {
           })
           .catch(done);
       });
+
+      it('ADMIN only', (done) => {
+        requester.post('/v1/daemonsets')
+          .set('X-Auth-Token', generateToken({ role: 'MEMBER' }))
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(403);
+            done();
+          })
+          .catch(done);
+      });
     });
 
     describe('Delete', () => {
@@ -57,6 +68,16 @@ describe('V1', () => {
         requester.delete(`/v1/daemonsets/${daemonsetName}`)
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
+            done();
+          })
+          .catch(done);
+      });
+
+      it('ADMIN only', (done) => {
+        requester.delete(`/v1/daemonsets/${daemonsetName}`)
+          .set('X-Auth-Token', generateToken({ role: 'MEMBER' }))
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(403);
             done();
           })
           .catch(done);

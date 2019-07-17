@@ -1,6 +1,7 @@
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import path from 'path';
+import { get } from 'lodash/fp';
 
 const { VALID_ORIGINS, FLOWNOTE_KEY_PUB, CLUSTER_ID } = process.env;
 const publicKeyFilePath = FLOWNOTE_KEY_PUB || '/etc/flownote/token/key.pub';
@@ -46,4 +47,14 @@ export const cors = (req, res, next) => {
   res.header('Vary', 'Origin');
 
   return next();
+};
+
+export const allow = roles => (req, res, next) => {
+  const role = get('user.role')(req);
+
+  if (roles.includes(role)) {
+    next();
+  } else {
+    res.sendStatus(403);
+  }
 };

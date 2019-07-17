@@ -1,8 +1,12 @@
 import express from 'express';
+
 import { getClient } from '../../k8s/client';
+import { allow } from '../../auth/middlewares';
 
 const router = express.Router();
 const k8sClient = getClient();
+
+router.use(allow(['ADMIN']));
 
 router.post('/', (req, res) => {
   k8sClient.createDaemonset(req.body)

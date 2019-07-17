@@ -8,7 +8,14 @@ chai.use(chaiHttp);
 const chaiRequester = chai.request(server).keepOpen();
 const { expect } = chai;
 
-const defaultToken = generateToken({ profileId: 'test', role: 'ADMIN' });
+// Cluster Id must match with token
+const defaultToken = generateToken({
+  profileId: 'test',
+  role: 'ADMIN',
+  workspaceId: 'test',
+  clusterId: undefined,
+});
+
 const requester = {
   get: (...args) => chaiRequester.get(...args).set('X-Auth-Token', defaultToken),
   post: (...args) => chaiRequester.post(...args).set('X-Auth-Token', defaultToken),
