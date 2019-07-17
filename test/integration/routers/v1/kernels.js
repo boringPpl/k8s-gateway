@@ -1,16 +1,15 @@
 import { requester, expect } from '../../../utils/chai-tools';
 import { getMessage } from '../../../utils/error-response';
+import { generateToken } from '../../../utils/token';
 
 describe('V1', () => {
   describe('Kernels', () => {
     describe('Create', () => {
       it('Create', (done) => {
-        // notebookPath to construct url(default to podName)
         const pod = {
           metadata: {
             name: 'test',
             labels: {
-              profileId: 'tung',
               notebookPath: 'test',
               shutdownTime: (Date.now() + 10000).toString(),
             },
@@ -47,9 +46,6 @@ describe('V1', () => {
         const pod = {
           metadata: {
             name: 'test2',
-            labels: {
-              profileId: 'tung',
-            },
           },
           container: { image: 'jupyter/minimal-notebook' },
           spec: { securityContext: {} },
@@ -75,7 +71,6 @@ describe('V1', () => {
           metadata: {
             name: 'test3',
             labels: {
-              profileId: 'tung',
               notebookPath: 'test3',
             },
           },
@@ -118,7 +113,6 @@ describe('V1', () => {
           metadata: {
             name: 'test4',
             labels: {
-              profileId: 'tung',
               specialNotebook: 'test',
               notebookPath: 'test4',
             },
@@ -157,12 +151,10 @@ describe('V1', () => {
 
     describe('Delete', () => {
       it('Delete', (done) => {
-        // notebookPath to construct url(default to podName)
         const pod = {
           metadata: {
             name: 'test5',
             labels: {
-              profileId: 'tung',
               notebookPath: 'test5',
               shutdownTime: (Date.now() + 10000).toString(),
             },
@@ -248,6 +240,50 @@ describe('V1', () => {
             expect(res, getMessage(res)).to.have.status(200);
             expect(res.body.shutdownTime).to.equal(shutdownTime);
             done();
+          })
+          .catch(done);
+      });
+    });
+
+    describe('Watch', () => {
+      it('OK', (done) => {
+        const pod = {
+          metadata: {
+            name: 'test7',
+            labels: {
+              notebookPath: 'test7',
+            },
+          },
+          container: {
+            image: 'jupyter/minimal-notebook',
+          },
+        };
+
+        const service = {
+          port: { port: 9999 },
+        };
+
+        const ingress = {
+          host: 'shopee.kernel.hasbrain.com',
+          spec: {
+            tls: [],
+          },
+        };
+
+        requester.post('/v1/kernels')
+          .set('X-Auth-Token', generateToken({ profileId: 'test7', role: 'MEMBER' }))
+          .send({ pod, service, ingress })
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(200);
+            return requester.get('/v1/kernels/watch')
+              .set('X-Auth-Token', generateToken({ profileId: 'test7', role: 'MEMBER' }))
+              .buffer(true)
+              .parse((resp) => {
+                resp.on('data', (chunk) => {
+                  const data = chunk.toString('utf8');
+                  if (data.includes('data: ')) done();
+                });
+              });
           })
           .catch(done);
       });

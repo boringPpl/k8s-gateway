@@ -22,12 +22,10 @@ export const createKernel = ({ pod, service, ingress }) => {
     return Promise.reject(new Error('Missing Ingress Name'));
   }
 
-  const rs = {
-    ...transform(kernel.pod),
-    phase: 'PENDING',
-  };
-  kernels.push(rs);
-  return Promise.resolve(rs);
+  const output = { ...transform(kernel.pod), phase: 'PENDING' };
+  kernels.push(output);
+
+  return Promise.resolve(output);
 };
 
 export const deleteKernel = (name) => {
@@ -73,4 +71,12 @@ export const createDaemonset = (body) => {
 export const deleteDaemonset = (name) => {
   remove(daemonsets, k => k.name === name);
   return Promise.resolve();
+};
+
+export const watchKernels = ({ onData }) => {
+  const kernel = kernels[0];
+  if (!kernel) return Promise.reject(new Error('Kernel Not Found'));
+
+  onData(kernel);
+  return Promise.resolve({ destroy: () => {} });
 };

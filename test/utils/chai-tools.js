@@ -11,7 +11,7 @@ const { expect } = chai;
 // Cluster Id must match with token
 const defaultToken = generateToken({
   profileId: 'test',
-  role: 'ADMIN',
+  role: 'MEMBER',
   workspaceId: 'test',
   clusterId: undefined,
 });

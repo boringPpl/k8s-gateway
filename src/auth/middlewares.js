@@ -16,7 +16,7 @@ export const authorize = (req, res, next) => {
     publicKeyStore.exp = now + publicKeyCacheTime;
   }
 
-  const token = req.headers['x-auth-token'];
+  const token = req.headers['x-auth-token'] || req.query.token;
 
   return jwt.verify(token, publicKeyStore.key, (err, payload) => {
     if (err) return res.sendStatus(401);

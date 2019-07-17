@@ -10,6 +10,7 @@ describe('V1', () => {
       it('Create', (done) => {
         const secretName = 'test';
         requester.put(`/v1/secrets/${secretName}`)
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
@@ -21,10 +22,12 @@ describe('V1', () => {
       it('Update', (done) => {
         const secretName = 'test2';
         requester.put(`/v1/secrets/${secretName}`)
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
             return requester.put(`/v1/secrets/${secretName}`)
+              .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
               .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' });
           })
           .then((res) => {
@@ -37,7 +40,6 @@ describe('V1', () => {
 
       it('ADMIN only', (done) => {
         requester.put('/v1/secrets/whatever')
-          .set('X-Auth-Token', generateToken({ role: 'MEMBER' }))
           .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(403);
@@ -53,10 +55,12 @@ describe('V1', () => {
       it('Delete', (done) => {
         const secretName = 'test3';
         requester.put(`/v1/secrets/${secretName}`)
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
-            return requester.delete(`/v1/secrets/${secretName}`);
+            return requester.delete(`/v1/secrets/${secretName}`)
+              .set('X-Auth-Token', generateToken({ role: 'ADMIN' }));
           })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);

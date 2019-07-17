@@ -148,34 +148,6 @@ export const getKernels = ({
     return { data: items.map(transform) };
   });
 
-export const refreshDeployment = (name) => {
-  const updatedAt = Date.now().toString();
-  const body = {
-    spec: {
-      template: {
-        metadata: {
-          labels: { updatedAt },
-        },
-      },
-    },
-  };
-
-  return clients.deployments(name).patch({ body });
-};
-
-export const upsertSecret = (name, body) => {
-  const secretBody = buildSecret({ ...body, name });
-
-  return clients.secrets(name).get()
-    .then(() => clients.secrets(name).put({ body: secretBody }))
-    .catch((err) => {
-      if (!err.message.includes('not found')) return Promise.reject(err);
-      return clients.secrets.post({ body: secretBody });
-    });
-};
-
-export const deleteSecret = name => clients.secrets(name).delete();
-
 export const cleanKernels = () => clients.pods.get({
   qs: { labelSelector: 'type=KERNEL' },
 })
@@ -206,6 +178,67 @@ export const updateKernel = (name, fields) => {
 
   return clients.pods(name).patch({ body });
 };
+
+export const watchKernels = (options) => {
+  const {
+    fields, labels, onData, shouldDestroy,
+  } = options;
+
+  return clients.watch
+    .pods
+    .getObjectStream({
+      qs: {
+        fieldSelector: fields,
+        labelSelector: labels,
+      },
+    })
+    .then(stream => new Promise((resolve, reject) => {
+      let resolved = false;
+      stream.on('data', ({ type, object }) => {
+        if (!resolved) {
+          resolved = true;
+          resolve(stream);
+        }
+
+        const kernel = transform({ ...object, type });
+        if (shouldDestroy && shouldDestroy(kernel)) stream.destroy();
+        onData(kernel);
+      });
+
+      stream.on('error', (err) => {
+        stream.destroy();
+        if (!resolved) reject(err);
+      });
+    }));
+};
+
+export const refreshDeployment = (name) => {
+  const updatedAt = Date.now().toString();
+  const body = {
+    spec: {
+      template: {
+        metadata: {
+          labels: { updatedAt },
+        },
+      },
+    },
+  };
+
+  return clients.deployments(name).patch({ body });
+};
+
+export const upsertSecret = (name, body) => {
+  const secretBody = buildSecret({ ...body, name });
+
+  return clients.secrets(name).get()
+    .then(() => clients.secrets(name).put({ body: secretBody }))
+    .catch((err) => {
+      if (!err.message.includes('not found')) return Promise.reject(err);
+      return clients.secrets.post({ body: secretBody });
+    });
+};
+
+export const deleteSecret = name => clients.secrets(name).delete();
 
 const updateDaemonset = (body) => {
   const daemonsetBody = buildDaemonset(body);

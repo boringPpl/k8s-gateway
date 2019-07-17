@@ -13,6 +13,7 @@ describe('V1', () => {
       it('Create WITH secret', (done) => {
         const secretName = 'secret-name';
         requester.post('/v1/daemonsets')
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({
             name: daemonsetName,
             secretName,
@@ -36,6 +37,7 @@ describe('V1', () => {
 
       it('Create WITHOUT secret', (done) => {
         requester.post('/v1/daemonsets')
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({
             name: daemonsetName,
             imagePath,
@@ -54,7 +56,6 @@ describe('V1', () => {
 
       it('ADMIN only', (done) => {
         requester.post('/v1/daemonsets')
-          .set('X-Auth-Token', generateToken({ role: 'MEMBER' }))
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(403);
             done();
@@ -66,6 +67,7 @@ describe('V1', () => {
     describe('Delete', () => {
       it('delete', (done) => {
         requester.delete(`/v1/daemonsets/${daemonsetName}`)
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
             done();
@@ -75,7 +77,6 @@ describe('V1', () => {
 
       it('ADMIN only', (done) => {
         requester.delete(`/v1/daemonsets/${daemonsetName}`)
-          .set('X-Auth-Token', generateToken({ role: 'MEMBER' }))
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(403);
             done();
