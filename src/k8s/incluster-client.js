@@ -56,7 +56,9 @@ export const watchKernel = (podName, { onData, shouldDestroy }) => clients.watch
     });
   }));
 
-export const createKernel = ({ pod, service, ingress }) => {
+export const createKernel = ({
+  pod, service, ingress, watch,
+}) => {
   if (!pod) return Promise.reject(new Error('Missing Pod'));
 
   const startKernel = {
@@ -98,13 +100,16 @@ export const createKernel = ({ pod, service, ingress }) => {
 
   const watchStatus = {
     exec: (kernel) => {
+      const output = { ...transform(kernel.pod), phase: 'PENDING' };
+      if (!watch) return output;
+
       const podName = get('pod.metadata.name')(kernel);
 
       return watchKernel(podName, {
         onData: updateKernelStatus,
         shouldDestroy: ({ phase }) => defaultStopPhases.includes(phase),
       })
-        .then(() => ({ ...transform(kernel.pod), phase: 'PENDING' }));
+        .then(() => output);
     },
   };
 
