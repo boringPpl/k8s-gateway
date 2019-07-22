@@ -2,6 +2,7 @@ import { Client } from 'kubernetes-client';
 import Request from 'kubernetes-client/backends/request';
 import {
   get, assign, flow, pick, toString, mapValues,
+  isArray, isEmpty,
 } from 'lodash/fp';
 
 import { build, buildSecret, buildDaemonset } from './manifest-builder';
@@ -30,6 +31,7 @@ export const initClient = () => {
   clients.secrets = clientApiV1.secrets;
   clients.watch = clientApiV1Watch;
   clients.daemonsets = clientApisAppsV1Beta2.daemonsets;
+  clients.nodes = client.api.v1.nodes;
 };
 
 const defaultStopPhases = ['DELETED', 'FAILED', 'SUCCEEDED', 'UNKNOWN'];
@@ -252,18 +254,13 @@ const updateDaemonset = (body) => {
   });
 };
 
-export const createDaemonset = (body) => {
-  const daemonsetBody = buildDaemonset(body);
-  return clients.daemonsets.post({
-    body: daemonsetBody,
-  }).catch((err) => {
-    if (err.statusCode === 409) {
-      // conflict -> update
-      return updateDaemonset(body);
-    }
-    return Promise.reject(err);
+const watchDaemonset = name => clients.watch
+  .pods
+  .getObjectStream({
+    qs: {
+      labelSelector: `name=${name}`,
+    },
   });
-};
 
 export const deleteDaemonset = name => clients.daemonsets(name).delete({
   qs: {
@@ -271,3 +268,67 @@ export const deleteDaemonset = name => clients.daemonsets(name).delete({
     propagationPolicy: 'Background',
   },
 });
+
+const watchDaemonsetAndDeleteOnDone = name => new Promise((resolve, reject) => {
+  let numReadyContainers = 0;
+  let numNodes = 0;
+  clients.nodes.get()
+    .then((resp) => {
+      const nodes = get('body.items', resp);
+      if (!isArray(nodes) || isEmpty(nodes)) {
+        return reject(new Error('There is no nodes to watch daemonset and delete on done'));
+      }
+      numNodes = nodes.length;
+      return watchDaemonset(name);
+    })
+    .then((stream) => {
+      stream.on('data', ({ type, object }) => {
+        const pod = transform({ ...object, type });
+        if (pod.phase === 'RUNNING') {
+          numReadyContainers += 1;
+          if (numReadyContainers >= numNodes) {
+            deleteDaemonset(name)
+              .then(() => {
+                console.log(`Pulled on ${numReadyContainers} nodes. Daemonset ${name} deleted`);
+              })
+              .catch((err) => {
+                reject(err);
+              })
+              .finally(() => {
+                stream.destroy();
+                resolve(name);
+              });
+          }
+        }
+      });
+      stream.on('error', (err) => {
+        reject(err);
+      });
+    })
+    .catch(err => reject(err));
+});
+
+export const createDaemonset = (body, autoDelete) => {
+  const daemonsetBody = buildDaemonset(body);
+  const { name } = body;
+  return clients.daemonsets
+    .post({
+      body: daemonsetBody,
+    })
+    .catch((err) => {
+      if (err.statusCode === 409) {
+      // conflict -> update
+        return updateDaemonset(body);
+      }
+      return Promise.reject(err);
+    })
+    .then((result) => {
+      if (autoDelete) {
+        watchDaemonsetAndDeleteOnDone(name)
+          .catch((err) => {
+            console.log(`watchDaemonsetAndDeleteOnDone failed with error: ${err}`);
+          });
+      }
+      return result;
+    });
+};

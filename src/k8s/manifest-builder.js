@@ -165,5 +165,7 @@ export const buildDaemonset = ({
     set('spec.template.spec.containers.0.image', imagePath),
     set('spec.template.spec.containers.0.command', command),
     set('spec.template.spec.imagePullSecrets', imagePullSecrets),
+    set('spec.selector.matchLabels.name', name),
+    set('spec.template.metadata.labels.name', name),
   )(defaultDaemonset);
 };

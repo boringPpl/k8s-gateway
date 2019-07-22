@@ -9,7 +9,8 @@ const k8sClient = getClient();
 router.use(allow(['ADMIN']));
 
 router.post('/', (req, res) => {
-  k8sClient.createDaemonset(req.body)
+  const autoDelete = req.query.autoDelete === 'true';
+  k8sClient.createDaemonset(req.body, autoDelete)
     .then(rs => res.json(rs))
     .catch(err => res.status(422).json({ message: err.message }));
 });
