@@ -149,12 +149,16 @@ export const buildSecret = ({ name, data, type = 'Opaque' }) => {
 };
 
 export const buildDaemonset = ({
-  name, imagePath, containerCommand, secretName,
+  name,
+  imagePath,
+  secretName,
+  containerCommand = 'echo SUCCESS',
 }) => {
+  const execCommandThenSleep = `${containerCommand} && sleep infinity`;
   const command = [
     '/bin/sh',
     '-c',
-    containerCommand,
+    execCommandThenSleep,
   ];
   const imagePullSecrets = isNil(secretName) ? undefined : [{
     name: secretName,

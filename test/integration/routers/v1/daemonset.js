@@ -6,7 +6,7 @@ describe('V1', () => {
   describe('Daemonset', () => {
     const daemonsetName = 'daemonset-name';
     const imagePath = 'docker.io/minhhien1996/image1';
-    const containerCommand = 'echo SUCCESS && sleep infinity';
+    const containerCommand = 'echo SUCCESS';
     // FIXME: `Delete` are bound to `Create`.
     // Do not try to run it separately
     describe('Create', () => {
