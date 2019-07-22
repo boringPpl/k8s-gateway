@@ -1,7 +1,7 @@
 import { get, assign } from 'lodash/fp';
 import { remove } from 'lodash';
 import { build, buildSecret, buildDaemonset } from './manifest-builder';
-import { transform } from '../kernels/transformer';
+import { transform } from './kernels/transformer';
 
 const kernels = [];
 

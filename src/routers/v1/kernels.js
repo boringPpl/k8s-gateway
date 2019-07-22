@@ -1,13 +1,12 @@
 import express from 'express';
 import { flow, get, set } from 'lodash/fp';
 
-import { getClient } from '../../k8s/client';
+import k8sClient from '../../k8s/client';
 import { buildAuthQuery } from '../../auth/query';
 import { writeSSEHeaders, sendSSEJSONData } from '../../utils/sse';
 import { addSelector } from '../../k8s/selector';
 
 const router = express.Router();
-const k8sClient = getClient();
 
 router.post('/', (req, res) => {
   const profileId = get('user.profileId')(req);

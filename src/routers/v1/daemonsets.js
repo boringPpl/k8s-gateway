@@ -1,12 +1,11 @@
 import express from 'express';
 
-import { getClient } from '../../k8s/client';
+import k8sClient from '../../k8s/client';
 import { allow } from '../../auth/middlewares';
 
 const router = express.Router();
-const k8sClient = getClient();
 
-router.use(allow(['ADMIN']));
+router.use(allow(['ADMIN', 'OWNER']));
 
 router.post('/', (req, res) => {
   const autoDelete = req.query.autoDelete === 'true';
