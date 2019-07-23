@@ -1,6 +1,4 @@
-import { getClient } from './k8s/client';
-
-const k8sClient = getClient();
+import k8sClient from './k8s/client';
 
 k8sClient.cleanKernels()
   .then(() => process.exit())
