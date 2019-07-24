@@ -46,13 +46,9 @@ export const buildPod = ({ metadata, container, spec }) => {
     filter(i => i),
   )(container);
 
-  const portPath = 'ports[0].containerPort';
-  const port = get(portPath)(container) || get(portPath)(defaultContainer);
-
   const containers = flow(
     assign(container),
     assign(defaultContainer),
-    set('readinessProbe.httpGet.port', port),
     concat([]),
   )({ args: notebookArgs });
 
