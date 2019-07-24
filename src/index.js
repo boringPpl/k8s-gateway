@@ -10,8 +10,6 @@ import cronjobs from './routers/v1/cronjobs';
 const app = express();
 const port = process.env.EXPRESS_PORT || 3000;
 
-app.get('/', (req, res) => res.sendStatus(200));
-
 app.use(cors);
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
@@ -20,6 +18,8 @@ app.use((req, res, next) => {
     next();
   }
 });
+
+app.get('/', (req, res) => res.sendStatus(200));
 
 app.use(authorize);
 
