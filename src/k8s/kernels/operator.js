@@ -130,14 +130,16 @@ export const getKernels = ({
   });
 
 export const cleanKernels = () => client.pods.get({
-  qs: { labelSelector: 'type=KERNEL' },
+  qs: { labelSelector: 'type=KERNEL', limit: 100 },
 })
   .then((resp) => {
     const items = get('body.items')(resp) || [];
+    const now = Date.now();
     const actions = items.reduce((rs, item) => {
       const { metadata: { name, labels } } = item;
       const shutdownTime = parseInt(get('shutdownTime')(labels), 10);
-      if (shutdownTime && shutdownTime <= Date.now()) {
+
+      if (shutdownTime && shutdownTime <= now) {
         rs.push(deleteKernel(name).catch(() => {}));
       }
       return rs;
@@ -147,17 +149,18 @@ export const cleanKernels = () => client.pods.get({
   });
 
 export const updateKernel = (name, fields) => {
-  const allowedUpdates = ['shutdownTime'];
-  const body = {
+  const allowedLabels = ['shutdownTime'];
+  const updates = {
     metadata: {
       labels: flow(
-        pick(allowedUpdates),
+        pick(allowedLabels),
         mapValues(toString),
       )(fields),
     },
   };
 
-  return client.pods(name).patch({ body });
+  return client.pods(name).patch({ body: updates })
+    .then(({ body }) => transform(body));
 };
 
 export const watchKernels = (options) => {

@@ -7,7 +7,7 @@
     "start": "node dist/index.js",
     "build": "babel src --out-dir dist --copy-files",
     "test": "NODE_ENV=test FLOWNOTE_KEY_PUB='../../test/secrets/key.pub' mocha --recursive --watch --require @babel/register test",
-    "dev": "nodemon --exec babel-node src/index.js",
+    "dev": "NODE_ENV=development FLOWNOTE_KEY_PUB='../../test/secrets/key.pub' nodemon --exec babel-node src/index.js",
     "hit": "NODE_ENV=hit FLOWNOTE_KEY_PUB='../../test/secrets/key.pub' mocha --recursive --require @babel/register test/integration"
   },
   "author": "",

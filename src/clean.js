@@ -1,6 +1,9 @@
 import k8sClient from './k8s/client';
 
-k8sClient.cleanKernels()
+Promise.all([
+  k8sClient.cleanKernels(),
+  k8sClient.cleanCronjobs(),
+])
   .then(() => process.exit())
   .catch((err) => {
     console.log(err);

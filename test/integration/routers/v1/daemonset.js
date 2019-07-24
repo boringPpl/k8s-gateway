@@ -1,6 +1,6 @@
 import { requester, expect } from '../../../utils/chai-tools';
 import { getMessage } from '../../../utils/error-response';
-import { generateToken } from '../../../utils/token';
+import { generateToken } from '../../../utils/generator';
 
 describe('V1', () => {
   describe('Daemonset', () => {

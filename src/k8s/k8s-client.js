@@ -9,11 +9,12 @@ export const initK8sClient = () => {
   const inClusterClient = new Client({ backend, version: '1.13' });
 
   const clientApiV1 = inClusterClient.api.v1;
-  const clientApiV1Namespace = inClusterClient.api.v1.namespaces(namespace);
-  const clientApiV1Watch = inClusterClient.api.v1.watch.namespaces(namespace);
+  const clientApiV1Namespace = clientApiV1.namespaces(namespace);
+  const clientApiV1Watch = clientApiV1.watch.namespaces(namespace);
   const clientApisExtensionsV1Beta1 = inClusterClient.apis.extensions.v1beta1.namespaces(namespace);
   const clientApisAppsV1Beta1 = inClusterClient.apis.apps.v1beta1.namespaces(namespace);
   const clientApisAppsV1Beta2 = inClusterClient.apis.apps.v1beta2.namespaces(namespace);
+  const clientApisBatchV1Beta1 = inClusterClient.apis.batch.v1beta1.namespaces(namespace);
 
   // TODO: Must match ma nifest version
   client.pods = clientApiV1Namespace.pods;
@@ -24,6 +25,7 @@ export const initK8sClient = () => {
   client.watch = clientApiV1Watch;
   client.daemonsets = clientApisAppsV1Beta2.daemonsets;
   client.nodes = clientApiV1.nodes;
+  client.cronjobs = clientApisBatchV1Beta1.cronjobs;
 
   return client;
 };

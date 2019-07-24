@@ -16,6 +16,7 @@ import defaultService from '../manifests/service.json';
 import defaultIngress from '../manifests/ingress.json';
 import defaultSecret from '../manifests/secret.json';
 import defaultDaemonset from '../manifests/daemonset.json';
+import defaultCronjob from '../manifests/cronjob.json';
 
 const defaultPort = {
   protocol: 'TCP',
@@ -172,4 +173,19 @@ export const buildDaemonset = ({
     set('spec.selector.matchLabels.name', name),
     set('spec.template.metadata.labels.name', name),
   )(defaultDaemonset);
+};
+
+export const buildCronjob = ({
+  metadata, schedule, container,
+}) => {
+  if (!container) throw new Error('Missing Cronjob Container');
+
+  const defaultCronjobContainer = pick(['name', 'image', 'imagePullPolicy'])(defaultContainer);
+  const newContainer = assign(defaultCronjobContainer)(container);
+
+  return flow(
+    set('metadata', metadata),
+    set('spec.schedule', schedule),
+    set('spec.jobTemplate.spec.template.spec.containers[0]', newContainer),
+  )(defaultCronjob);
 };

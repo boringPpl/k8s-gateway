@@ -2,7 +2,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 
 import server from '../../src/index';
-import { generateToken } from './token';
+import { generateToken } from './generator';
 
 chai.use(chaiHttp);
 const chaiRequester = chai.request(server).keepOpen();

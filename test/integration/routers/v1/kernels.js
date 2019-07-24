@@ -1,16 +1,17 @@
 import { requester, expect } from '../../../utils/chai-tools';
 import { getMessage } from '../../../utils/error-response';
-import { generateToken } from '../../../utils/token';
+import { generateToken, generateName } from '../../../utils/generator';
 
 describe('V1', () => {
   describe('Kernels', () => {
     describe('Create', () => {
       it('Create', (done) => {
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test',
+            name,
             labels: {
-              notebookPath: 'test',
+              notebookPath: name,
               shutdownTime: (Date.now() + 10000).toString(),
             },
           },
@@ -45,7 +46,7 @@ describe('V1', () => {
       it('Create Fail then Rollback', (done) => {
         const pod = {
           metadata: {
-            name: 'test2',
+            name: generateName('kernel'),
           },
           container: { image: 'jupyter/minimal-notebook' },
           spec: { securityContext: {} },
@@ -67,11 +68,12 @@ describe('V1', () => {
 
     describe('Get One', () => {
       it('OK', (done) => {
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test3',
+            name,
             labels: {
-              notebookPath: 'test3',
+              notebookPath: name,
             },
           },
           container: {
@@ -109,12 +111,13 @@ describe('V1', () => {
 
     describe('List', () => {
       it('OK', (done) => {
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test4',
+            name,
             labels: {
               specialNotebook: 'test',
-              notebookPath: 'test4',
+              notebookPath: name,
             },
           },
           container: { image: 'jupyter/minimal-notebook' },
@@ -151,11 +154,12 @@ describe('V1', () => {
 
     describe('Delete', () => {
       it('Delete', (done) => {
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test5',
+            name,
             labels: {
-              notebookPath: 'test5',
+              notebookPath: name,
               shutdownTime: (Date.now() + 10000).toString(),
             },
           },
@@ -199,12 +203,13 @@ describe('V1', () => {
 
     describe('Patch', () => {
       it('OK', (done) => {
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test6',
+            name,
             labels: {
               profileId: 'tung',
-              notebookPath: 'test6',
+              notebookPath: name,
             },
           },
           container: {
@@ -234,10 +239,6 @@ describe('V1', () => {
           })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
-            return requester.get(`/v1/kernels/${pod.metadata.name}`);
-          })
-          .then((res) => {
-            expect(res, getMessage(res)).to.have.status(200);
             expect(res.body.shutdownTime).to.equal(shutdownTime);
             done();
           })
@@ -247,11 +248,12 @@ describe('V1', () => {
 
     describe('Watch', () => {
       it('OK', (done) => {
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test7',
+            name,
             labels: {
-              notebookPath: 'test7',
+              notebookPath: name,
             },
           },
           container: {
