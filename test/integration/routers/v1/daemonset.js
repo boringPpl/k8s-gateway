@@ -1,19 +1,21 @@
 import { requester, expect } from '../../../utils/chai-tools';
 import { getMessage } from '../../../utils/error-response';
+import { generateToken } from '../../../utils/generator';
 
 describe('V1', () => {
   describe('Daemonset', () => {
     const daemonsetName = 'daemonset-name';
-    const imagePath = 'docker.io/image1';
-    const containerCommand = 'echo "hello"';
+    const imagePath = 'docker.io/minhhien1996/image1';
+    const containerCommand = 'echo SUCCESS';
     // FIXME: `Delete` are bound to `Create`.
     // Do not try to run it separately
     describe('Create', () => {
       it('Create WITH secret', (done) => {
         const secretName = 'secret-name';
-        requester.post('/v1/daemonsets')
+        requester.post('/v1/daemonsets?autoDelete=true')
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({
-            name: daemonsetName,
+            name: `${daemonsetName}-secret`,
             secretName,
             imagePath,
             containerCommand,
@@ -34,9 +36,10 @@ describe('V1', () => {
       });
 
       it('Create WITHOUT secret', (done) => {
-        requester.post('/v1/daemonsets')
+        requester.post('/v1/daemonsets?autoDelete=true')
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({
-            name: daemonsetName,
+            name: `${daemonsetName}-no-secret`,
             imagePath,
             containerCommand,
           })
@@ -50,13 +53,41 @@ describe('V1', () => {
           })
           .catch(done);
       });
+
+      it('ADMIN only', (done) => {
+        requester.post('/v1/daemonsets')
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(403);
+            done();
+          })
+          .catch(done);
+      });
     });
 
     describe('Delete', () => {
+      const name = `${daemonsetName}-delete`;
       it('delete', (done) => {
-        requester.delete(`/v1/daemonsets/${daemonsetName}`)
+        requester.post('/v1/daemonsets')
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
+          .send({
+            name,
+            imagePath,
+            containerCommand,
+          })
+          .then(() => requester
+            .delete(`/v1/daemonsets/${name}`)
+            .set('X-Auth-Token', generateToken({ role: 'ADMIN' })))
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
+            done();
+          })
+          .catch(done);
+      });
+
+      it('ADMIN only', (done) => {
+        requester.delete(`/v1/daemonsets/${daemonsetName}`)
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(403);
             done();
           })
           .catch(done);

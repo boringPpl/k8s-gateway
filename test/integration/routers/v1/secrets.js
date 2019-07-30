@@ -1,5 +1,6 @@
 import { requester, expect } from '../../../utils/chai-tools';
 import { getMessage } from '../../../utils/error-response';
+import { generateToken } from '../../../utils/generator';
 
 describe('V1', () => {
   describe('Secrets', () => {
@@ -9,6 +10,7 @@ describe('V1', () => {
       it('Create', (done) => {
         const secretName = 'test';
         requester.put(`/v1/secrets/${secretName}`)
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
@@ -20,10 +22,12 @@ describe('V1', () => {
       it('Update', (done) => {
         const secretName = 'test2';
         requester.put(`/v1/secrets/${secretName}`)
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
             return requester.put(`/v1/secrets/${secretName}`)
+              .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
               .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' });
           })
           .then((res) => {
@@ -33,6 +37,16 @@ describe('V1', () => {
           .catch(done)
           .finally(() => requester.delete(`/v1/secrets/${secretName}`));
       });
+
+      it('ADMIN only', (done) => {
+        requester.put('/v1/secrets/whatever')
+          .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(403);
+            done();
+          })
+          .catch(done);
+      });
     });
 
     describe('Delete', () => {
@@ -41,10 +55,12 @@ describe('V1', () => {
       it('Delete', (done) => {
         const secretName = 'test3';
         requester.put(`/v1/secrets/${secretName}`)
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
           .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
-            return requester.delete(`/v1/secrets/${secretName}`);
+            return requester.delete(`/v1/secrets/${secretName}`)
+              .set('X-Auth-Token', generateToken({ role: 'ADMIN' }));
           })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
@@ -52,6 +68,16 @@ describe('V1', () => {
           })
           .catch(done)
           .finally(() => requester.delete(`/v1/secrets/${secretName}`));
+      });
+
+      it('ADMIN only', (done) => {
+        requester.delete('/v1/secrets/whatever')
+          .set('X-Auth-Token', generateToken({ role: 'MEMBER' }))
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(403);
+            done();
+          })
+          .catch(done);
       });
     });
   });

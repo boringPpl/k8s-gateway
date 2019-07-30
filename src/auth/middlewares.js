@@ -1,6 +1,7 @@
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import path from 'path';
+import { get } from 'lodash/fp';
 
 const { VALID_ORIGINS, FLOWNOTE_KEY_PUB, CLUSTER_ID } = process.env;
 const publicKeyFilePath = FLOWNOTE_KEY_PUB || '/etc/flownote/token/key.pub';
@@ -15,7 +16,7 @@ export const authorize = (req, res, next) => {
     publicKeyStore.exp = now + publicKeyCacheTime;
   }
 
-  const token = req.headers['x-auth-token'];
+  const token = req.headers['x-auth-token'] || req.query.token;
 
   return jwt.verify(token, publicKeyStore.key, (err, payload) => {
     if (err) return res.sendStatus(401);
@@ -42,8 +43,18 @@ export const cors = (req, res, next) => {
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept, X-Auth-Token',
   );
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Vary', 'Origin');
 
   return next();
+};
+
+export const allow = roles => (req, res, next) => {
+  const role = get('user.role')(req);
+
+  if (roles.includes(role)) {
+    next();
+  } else {
+    res.sendStatus(403);
+  }
 };

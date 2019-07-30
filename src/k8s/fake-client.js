@@ -1,9 +1,13 @@
 import { get, assign } from 'lodash/fp';
 import { remove } from 'lodash';
-import { build, buildSecret, buildDaemonset } from './manifest-builder';
-import { transform } from '../kernels/transformer';
+import {
+  build, buildSecret, buildDaemonset, buildCronjob,
+} from './manifest-builder';
+import { transform } from './kernels/transformer';
+import { transform as cronjobTransform } from './cronjobs/transformer';
 
 const kernels = [];
+const cronjobs = [];
 
 export const createKernel = ({ pod, service, ingress }) => {
   const kernel = build({ pod });
@@ -22,12 +26,10 @@ export const createKernel = ({ pod, service, ingress }) => {
     return Promise.reject(new Error('Missing Ingress Name'));
   }
 
-  const rs = {
-    ...transform(kernel.pod),
-    phase: 'PENDING',
-  };
-  kernels.push(rs);
-  return Promise.resolve(rs);
+  const output = { ...transform(kernel.pod), phase: 'PENDING' };
+  kernels.push(output);
+
+  return Promise.resolve(output);
 };
 
 export const deleteKernel = (name) => {
@@ -73,4 +75,35 @@ export const createDaemonset = (body) => {
 export const deleteDaemonset = (name) => {
   remove(daemonsets, k => k.name === name);
   return Promise.resolve();
+};
+
+export const watchKernels = ({ onData }) => {
+  const kernel = kernels[0];
+  if (!kernel) return Promise.reject(new Error('Kernel Not Found'));
+
+  onData(kernel);
+  return Promise.resolve({ destroy: () => {} });
+};
+
+export const createCronjob = (options) => {
+  const cronjob = cronjobTransform(buildCronjob(options));
+  cronjobs.push(cronjob);
+  return Promise.resolve(cronjob);
+};
+
+export const deleteCronjob = (name) => {
+  remove(cronjobs, c => c.name === name);
+  return Promise.resolve();
+};
+
+export const getCronjobs = () => Promise.resolve({ data: cronjobs });
+
+export const updateCronjob = (name, body) => {
+  const cronjob = cronjobs.find(k => k.name === name);
+  if (!cronjob) return Promise.reject(new Error('Cronjob Not Found'));
+
+  Object.keys(body).forEach((k) => {
+    cronjob[k] = body[k];
+  });
+  return Promise.resolve(cronjob);
 };

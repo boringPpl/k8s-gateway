@@ -16,6 +16,7 @@ import defaultService from '../manifests/service.json';
 import defaultIngress from '../manifests/ingress.json';
 import defaultSecret from '../manifests/secret.json';
 import defaultDaemonset from '../manifests/daemonset.json';
+import defaultCronjob from '../manifests/cronjob.json';
 
 const defaultPort = {
   protocol: 'TCP',
@@ -45,13 +46,9 @@ export const buildPod = ({ metadata, container, spec }) => {
     filter(i => i),
   )(container);
 
-  const portPath = 'ports[0].containerPort';
-  const port = get(portPath)(container) || get(portPath)(defaultContainer);
-
   const containers = flow(
     assign(container),
     assign(defaultContainer),
-    set('readinessProbe.httpGet.port', port),
     concat([]),
   )({ args: notebookArgs });
 
@@ -149,12 +146,16 @@ export const buildSecret = ({ name, data, type = 'Opaque' }) => {
 };
 
 export const buildDaemonset = ({
-  name, imagePath, containerCommand, secretName,
+  name,
+  imagePath,
+  secretName,
+  containerCommand = 'echo SUCCESS',
 }) => {
+  const execCommandThenSleep = `${containerCommand} && sleep infinity`;
   const command = [
     '/bin/sh',
     '-c',
-    containerCommand,
+    execCommandThenSleep,
   ];
   const imagePullSecrets = isNil(secretName) ? undefined : [{
     name: secretName,
@@ -165,5 +166,22 @@ export const buildDaemonset = ({
     set('spec.template.spec.containers.0.image', imagePath),
     set('spec.template.spec.containers.0.command', command),
     set('spec.template.spec.imagePullSecrets', imagePullSecrets),
+    set('spec.selector.matchLabels.name', name),
+    set('spec.template.metadata.labels.name', name),
   )(defaultDaemonset);
+};
+
+export const buildCronjob = ({
+  metadata, schedule, container,
+}) => {
+  if (!container) throw new Error('Missing Cronjob Container');
+
+  const defaultCronjobContainer = pick(['name', 'image', 'imagePullPolicy'])(defaultContainer);
+  const newContainer = assign(defaultCronjobContainer)(container);
+
+  return flow(
+    set('metadata', metadata),
+    set('spec.schedule', schedule),
+    set('spec.jobTemplate.spec.template.spec.containers[0]', newContainer),
+  )(defaultCronjob);
 };

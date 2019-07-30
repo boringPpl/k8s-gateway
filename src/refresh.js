@@ -1,6 +1,5 @@
-import { getClient } from './k8s/client';
+import k8sClient from './k8s/client';
 
-const k8sClient = getClient();
 const k8sGatewayDeployment = process.env.GATEWAY_DEPLOYMENT || 'k8s-gateway';
 
 k8sClient.refreshDeployment(k8sGatewayDeployment)

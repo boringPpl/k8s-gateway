@@ -1,17 +1,17 @@
 import { requester, expect } from '../../../utils/chai-tools';
 import { getMessage } from '../../../utils/error-response';
+import { generateToken, generateName } from '../../../utils/generator';
 
 describe('V1', () => {
   describe('Kernels', () => {
     describe('Create', () => {
       it('Create', (done) => {
-        // notebookPath to construct url(default to podName)
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test',
+            name,
             labels: {
-              profileId: 'tung',
-              notebookPath: 'test',
+              notebookPath: name,
               shutdownTime: (Date.now() + 10000).toString(),
             },
           },
@@ -46,10 +46,7 @@ describe('V1', () => {
       it('Create Fail then Rollback', (done) => {
         const pod = {
           metadata: {
-            name: 'test2',
-            labels: {
-              profileId: 'tung',
-            },
+            name: generateName('kernel'),
           },
           container: { image: 'jupyter/minimal-notebook' },
           spec: { securityContext: {} },
@@ -71,12 +68,12 @@ describe('V1', () => {
 
     describe('Get One', () => {
       it('OK', (done) => {
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test3',
+            name,
             labels: {
-              profileId: 'tung',
-              notebookPath: 'test3',
+              notebookPath: name,
             },
           },
           container: {
@@ -114,13 +111,13 @@ describe('V1', () => {
 
     describe('List', () => {
       it('OK', (done) => {
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test4',
+            name,
             labels: {
-              profileId: 'tung',
               specialNotebook: 'test',
-              notebookPath: 'test4',
+              notebookPath: name,
             },
           },
           container: { image: 'jupyter/minimal-notebook' },
@@ -157,13 +154,12 @@ describe('V1', () => {
 
     describe('Delete', () => {
       it('Delete', (done) => {
-        // notebookPath to construct url(default to podName)
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test5',
+            name,
             labels: {
-              profileId: 'tung',
-              notebookPath: 'test5',
+              notebookPath: name,
               shutdownTime: (Date.now() + 10000).toString(),
             },
           },
@@ -207,12 +203,13 @@ describe('V1', () => {
 
     describe('Patch', () => {
       it('OK', (done) => {
+        const name = generateName('kernel');
         const pod = {
           metadata: {
-            name: 'test6',
+            name,
             labels: {
               profileId: 'tung',
-              notebookPath: 'test6',
+              notebookPath: name,
             },
           },
           container: {
@@ -242,12 +239,53 @@ describe('V1', () => {
           })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
-            return requester.get(`/v1/kernels/${pod.metadata.name}`);
-          })
-          .then((res) => {
-            expect(res, getMessage(res)).to.have.status(200);
             expect(res.body.shutdownTime).to.equal(shutdownTime);
             done();
+          })
+          .catch(done);
+      });
+    });
+
+    describe('Watch', () => {
+      it('OK', (done) => {
+        const name = generateName('kernel');
+        const pod = {
+          metadata: {
+            name,
+            labels: {
+              notebookPath: name,
+            },
+          },
+          container: {
+            image: 'jupyter/minimal-notebook',
+          },
+        };
+
+        const service = {
+          port: { port: 9999 },
+        };
+
+        const ingress = {
+          host: 'shopee.kernel.hasbrain.com',
+          spec: {
+            tls: [],
+          },
+        };
+
+        requester.post('/v1/kernels')
+          .set('X-Auth-Token', generateToken({ profileId: 'test7', role: 'MEMBER' }))
+          .send({ pod, service, ingress })
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(200);
+            return requester.get('/v1/kernels/watch')
+              .set('X-Auth-Token', generateToken({ profileId: 'test7', role: 'MEMBER' }))
+              .buffer(true)
+              .parse((resp) => {
+                resp.on('data', (chunk) => {
+                  const data = chunk.toString('utf8');
+                  if (data.includes('data: ')) done();
+                });
+              });
           })
           .catch(done);
       });

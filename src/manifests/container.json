@@ -3,13 +3,5 @@
   "imagePullPolicy": "IfNotPresent",
   "name": "notebook",
   "ports": [{ "containerPort": 8888 }],
-  "command": ["tini", "-g", "--", "jupyter", "notebook"],
-  "readinessProbe": {
-    "initialDelaySeconds": 1,
-    "periodSeconds": 1,
-    "successThreshold": 1,
-    "httpGet": {
-      "path": "/api"
-    }
-  }
+  "command": ["tini", "-g", "--", "jupyter", "notebook"]
 }

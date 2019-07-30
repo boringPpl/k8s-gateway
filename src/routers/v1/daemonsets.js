@@ -1,11 +1,15 @@
 import express from 'express';
-import { getClient } from '../../k8s/client';
+
+import k8sClient from '../../k8s/client';
+import { allow } from '../../auth/middlewares';
 
 const router = express.Router();
-const k8sClient = getClient();
+
+router.use(allow(['ADMIN', 'OWNER']));
 
 router.post('/', (req, res) => {
-  k8sClient.createDaemonset(req.body)
+  const autoDelete = req.query.autoDelete === 'true';
+  k8sClient.createDaemonset(req.body, autoDelete)
     .then(rs => res.json(rs))
     .catch(err => res.status(422).json({ message: err.message }));
 });

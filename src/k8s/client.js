@@ -1,11 +1,15 @@
-import * as fakeClient from './fake-client';
-import * as inclusterClient from './incluster-client';
+import { initK8sClient } from './k8s-client';
+import * as FakeClient from './fake-client';
+import * as FlownoteClient from './flownote-client';
 
-export const getClient = () => {
-  if (process.env.NODE_ENV === 'test') {
-    return fakeClient;
-  }
+const getClient = () => {
+  const { NODE_ENV } = process.env;
+  const testEnvs = ['test', 'development'];
 
-  inclusterClient.initClient();
-  return inclusterClient;
+  if (testEnvs.includes(NODE_ENV)) return FakeClient;
+
+  initK8sClient();
+  return FlownoteClient;
 };
+
+export default getClient();
