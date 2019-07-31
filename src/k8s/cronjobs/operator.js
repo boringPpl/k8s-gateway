@@ -16,8 +16,8 @@ export const createCronjob = (options) => {
 export const deleteCronjob = name => client.cronjobs(name).delete({
   qs: {
     propagationPolicy: 'Background',
-  }
-})
+  },
+});
 
 export const updateCronjob = (name, fields) => {
   const allowedLabels = ['shutdownTime', 'suspend'];

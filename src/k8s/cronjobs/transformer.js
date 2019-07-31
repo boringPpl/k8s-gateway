@@ -8,4 +8,6 @@ export const transform = cronjob => ({
   schedule: get('spec.schedule')(cronjob),
   notebook: get('metadata.labels.notebook')(cronjob),
   shutdownTime: getShutdownTime(cronjob),
+  active: get('status.active.length')(cronjob) || 0,
+  lastSchedule: get('status.lastScheduleTime')(cronjob),
 });
