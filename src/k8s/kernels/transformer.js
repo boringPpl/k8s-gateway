@@ -88,7 +88,6 @@ export const getMetadata = flow(
 );
 
 export const transform = kernel => ({
-  metadata: get('metadata')(kernel),
   profileId: get('metadata.labels.profileId')(kernel),
   name: get('metadata.name')(kernel),
   notebookPath: get('metadata.labels.notebookPath')(kernel),

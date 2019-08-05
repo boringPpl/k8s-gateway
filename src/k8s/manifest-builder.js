@@ -31,18 +31,14 @@ const defaultNotebookArgs = [
 const generateToken = () => crypto.randomBytes(16).toString('hex');
 
 export const buildPod = ({ metadata, container, spec }) => {
-  const token = generateToken();
   const defaultLabels = get('metadata.labels')(defaultPod);
-  const labels = flow(
-    get('labels'),
-    assign(defaultLabels),
-    set('token', token),
-  )(metadata);
+  const labels = assign(defaultLabels, get('labels')(metadata));
+  if (!labels.token) labels.token = generateToken();
 
   const notebookArgs = flow(
     get('args'),
     concat(defaultNotebookArgs),
-    concat([`--NotebookApp.token=${token}`]),
+    concat([`--NotebookApp.token=${labels.token}`]),
     filter(i => i),
   )(container);
 

@@ -13,6 +13,7 @@ describe('V1', () => {
             labels: {
               notebookPath: name,
               shutdownTime: (Date.now() + 10000).toString(),
+              token: '123',
             },
           },
           container: {
