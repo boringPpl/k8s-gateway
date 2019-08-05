@@ -81,10 +81,13 @@ export const buildService = ({
 };
 
 const ingressOption = (type, serviceName) => {
-  // haproxy
-  if (!type) return { rewriteKey: 'ingress.kubernetes.io/rewrite-target', rewrite: '/', path: `/${serviceName}` };
-  // nginx
-  return { rewriteKey: 'nginx.ingress.kubernetes.io/rewrite-target', rewrite: '/', path: `/${serviceName}(/|$)(.*)` };
+  switch (type) {
+    case 'nginx':
+      return { annotations: { 'nginx.ingress.kubernetes.io/rewrite-target': '/$2', 'kubernetes.io/ingress.class': 'nginx' }, path: `/${serviceName}(/|$)(.*)` };
+    // haproxy
+    default:
+      return { annotations: { 'ingress.kubernetes.io/rewrite-target': '/', 'kubernetes.io/ingress.class': 'haproxy' }, path: `/${serviceName}` };
+  }
 };
 
 export const buildIngress = ({
@@ -93,8 +96,8 @@ export const buildIngress = ({
   const serviceName = get('metadata.name')(service);
   const ingressMetadata = assign({ name: serviceName, annotations: {} })(metadata);
   const ruleExists = get('rules')(spec);
-  const { rewriteKey, rewrite, path } = ingressOption(ingressType, serviceName);
-  if (!ruleExists) ingressMetadata.annotations[rewriteKey] = rewrite;
+  const { annotations, path } = ingressOption(ingressType, serviceName);
+  if (!ruleExists) Object.assign(ingressMetadata.annotations, annotations);
 
   const servicePort = get('spec.ports[0].port')(service);
   const rule = {

@@ -33,7 +33,9 @@ describe('V1', () => {
           port: { port: 9999 },
         };
 
-        const ingress = {};
+        const ingress = {
+          host: 'shopee.kernel.hasbrain.com',
+        };
 
         requester.post('/v1/kernels')
           .send({ pod, service, ingress })
