@@ -172,16 +172,17 @@ export const buildDaemonset = ({
 };
 
 export const buildCronjob = ({
-  metadata, schedule, container,
+  metadata, schedule, container, spec,
 }) => {
   if (!container) throw new Error('Missing Cronjob Container');
 
   const defaultCronjobContainer = pick(['name', 'image', 'imagePullPolicy'])(defaultContainer);
   const newContainer = assign(defaultCronjobContainer)(container);
+  const newSpec = assign({ containers: [newContainer], restartPolicy: 'OnFailure' }, spec);
 
   return flow(
     set('metadata', metadata),
     set('spec.schedule', schedule),
-    set('spec.jobTemplate.spec.template.spec.containers[0]', newContainer),
+    set('spec.jobTemplate.spec.template.spec', newSpec),
   )(defaultCronjob);
 };

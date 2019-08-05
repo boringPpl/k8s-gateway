@@ -57,6 +57,10 @@ describe('V1', () => {
                 'date; echo Hello from the Kubernetes cluster',
               ],
             },
+            spec: {
+              dnsPolicy: 'ClusterFirstWithHostNet',
+              hostNetwork: true,
+            },
           })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
