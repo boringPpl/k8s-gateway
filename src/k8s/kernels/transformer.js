@@ -93,5 +93,7 @@ export const transform = kernel => ({
   notebookPath: get('metadata.labels.notebookPath')(kernel),
   shutdownTime: getShutdownTime(kernel),
   token: get('metadata.labels.token')(kernel),
+  machineClusterTemplateId: get('metadata.labels.machineClusterTemplateId')(kernel),
+  imageId: get('metadata.labels.imageId')(kernel),
   ...statusToPhase(kernel),
 });
