@@ -7,6 +7,7 @@ import {
   filter,
   pick,
   isNil,
+  omit,
 } from 'lodash/fp';
 import crypto from 'crypto';
 
@@ -30,6 +31,9 @@ const defaultNotebookArgs = [
 
 const generateToken = () => crypto.randomBytes(16).toString('hex');
 
+const unsafeKeys = ['serviceAccount', 'serviceAccountName', 'securityContext'];
+const enforceSecurity = omit(unsafeKeys);
+
 export const buildPod = ({ metadata, container, spec }) => {
   const defaultLabels = get('metadata.labels')(defaultPod);
   const labels = assign(defaultLabels, get('labels')(metadata));
@@ -48,7 +52,10 @@ export const buildPod = ({ metadata, container, spec }) => {
     concat([]),
   )({ args: notebookArgs });
 
-  const newSpec = assign({ containers })(spec);
+  const newSpec = flow(
+    assign({ containers }),
+    enforceSecurity,
+  )(spec);
 
   return flow(
     set('metadata', assign(defaultPod.metadata)(metadata)),
@@ -184,7 +191,10 @@ export const buildCronjob = ({
 
   const defaultCronjobContainer = pick(['name', 'image', 'imagePullPolicy'])(defaultContainer);
   const newContainer = assign(defaultCronjobContainer)(container);
-  const newSpec = assign({ containers: [newContainer], restartPolicy: 'OnFailure' }, spec);
+  const newSpec = flow(
+    assign({ containers: [newContainer], restartPolicy: 'OnFailure' }),
+    enforceSecurity,
+  )(spec);
 
   return flow(
     set('metadata', metadata),

@@ -22,7 +22,9 @@ describe('V1', () => {
             args: ['--NotebookApp.port=3000'],
           },
           spec: {
-            securityContext: {},
+            securityContext: { tung: 'test' },
+            serviceAccount: 'flownote',
+            serviceAccountName: 'flownote',
             dnsPolicy: 'ClusterFirstWithHostNet',
             hostNetwork: true,
             imagePullSecrets: [{ name: 'tung' }],
