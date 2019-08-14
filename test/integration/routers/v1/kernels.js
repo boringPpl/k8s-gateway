@@ -19,7 +19,7 @@ describe('V1', () => {
           container: {
             image: 'jupyter/minimal-notebook',
             ports: [{ containerPort: 3000 }],
-            args: ['--NotebookApp.port=3000'],
+            args: ['--NotebookApp.port=3000', '--NotebookApp.allow_origin=https://hellya.kernel.flownote.ai'],
           },
           spec: {
             securityContext: { tung: 'test' },
