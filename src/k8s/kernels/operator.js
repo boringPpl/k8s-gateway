@@ -99,13 +99,13 @@ export const createKernel = ({
 
 export const deleteKernel = (podName, options = {}) => {
   if (!podName) return Promise.reject(new Error('Missing Pod Name'));
-  const { serviceName, ingressName } = options;
+  const { serviceName = podName, ingressName = podName } = options;
 
   return client.pods(podName).delete()
-    .then(() => Promise.all([
-      client.services(serviceName || podName).delete().catch(console.log),
-      client.ingresses(ingressName || podName).delete().catch(console.log),
-    ]));
+    .finally(() => {
+      client.services(serviceName).delete().catch(console.log);
+      client.ingresses(ingressName).delete().catch(console.log);
+    });
 };
 
 export const getKernel = (podName) => {

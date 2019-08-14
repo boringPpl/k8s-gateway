@@ -90,14 +90,19 @@ export const buildService = ({
 const ingressOption = (type, serviceName) => {
   switch (type) {
     case 'nginx':
-      return { annotations: { 'nginx.ingress.kubernetes.io/rewrite-target': '/$2', 'kubernetes.io/ingress.class': 'nginx' }, path: `/${serviceName}(/|$)(.*)` };
+      return {
+        annotations: {
+          'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
+          'kubernetes.io/ingress.class': 'nginx',
+        },
+        path: `/${serviceName}(/|$)(.*)`,
+      };
     // haproxy
     default:
       return {
         annotations: {
           'ingress.kubernetes.io/rewrite-target': '/',
           'kubernetes.io/ingress.class': 'haproxy',
-          'ingress.kubernetes.io/affinity': 'cookie',
         },
         path: `/${serviceName}`,
       };
