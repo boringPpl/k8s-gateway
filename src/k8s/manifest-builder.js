@@ -27,6 +27,7 @@ const defaultPort = {
 const defaultNotebookArgs = [
   '--NotebookApp.allow_origin=*',
   '--NotebookApp.disable_check_xsrf=True',
+  '--NotebookApp.allow_credentialsBool=True',
 ];
 
 const generateToken = () => crypto.randomBytes(16).toString('hex');

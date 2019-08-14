@@ -44,6 +44,7 @@ export const cors = (req, res, next) => {
     'Origin, X-Requested-With, Content-Type, Accept, X-Auth-Token',
   );
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Vary', 'Origin');
 
   return next();
