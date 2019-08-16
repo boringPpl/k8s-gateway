@@ -8,7 +8,7 @@ import { writeSSEHeaders, sendSSEJSONData } from '../../utils/sse';
 import { addSelector } from '../../k8s/selector';
 
 const router = express.Router();
-router.post('/', mustHave('CREATE'));
+if (process.env.CLOUD === 'yes') router.post('/', mustHave('CREATE'));
 
 router.post('/', (req, res) => {
   const body = set('pod.metadata.labels.profileId', req.user.profileId)(req.body);

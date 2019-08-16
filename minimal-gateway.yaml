@@ -20,6 +20,8 @@ spec:
     env:
     - name: FLOWNOTE_SERVER
       value: ""
+    - name: CLOUD
+      value: "yes"
   volumes:
   - name: flownote-token
     secret:
