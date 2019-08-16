@@ -13,7 +13,7 @@ const defaultToken = generateToken({
   profileId: 'test',
   role: 'MEMBER',
   workspaceId: 'test',
-  clusterId: undefined,
+  access: [{ resource: 'kernels', permissions: ['CREATE'] }],
 });
 
 const requester = {

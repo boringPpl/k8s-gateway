@@ -278,10 +278,15 @@ describe('V1', () => {
         };
 
         requester.post('/v1/kernels')
-          .set('X-Auth-Token', generateToken({ profileId: 'test7', role: 'MEMBER' }))
+          .set('X-Auth-Token', generateToken({
+            profileId: 'test7',
+            role: 'MEMBER',
+            access: [{ resource: 'kernels', permissions: ['CREATE'] }],
+          }))
           .send({ pod, service, ingress })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
+
             return requester.get('/v1/kernels/watch')
               .set('X-Auth-Token', generateToken({ profileId: 'test7', role: 'MEMBER' }))
               .buffer(true)

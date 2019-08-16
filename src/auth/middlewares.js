@@ -59,3 +59,21 @@ export const allow = roles => (req, res, next) => {
     res.sendStatus(403);
   }
 };
+
+const getResourceFromPath = (expressPath) => {
+  if (!expressPath) return null;
+  const parts = expressPath.split('/').filter(i => i);
+  return parts[1];
+};
+
+export const mustHave = permission => (req, res, next) => {
+  const resource = getResourceFromPath(req.originalUrl);
+  const access = get('user.access')(req) || [];
+
+  const found = access.find(p => p.resource === resource);
+  if (!found || !found.permissions.includes(permission)) {
+    return res.sendStatus(403);
+  }
+
+  return next();
+};
