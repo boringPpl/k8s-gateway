@@ -1,4 +1,6 @@
-import { get, assign } from 'lodash/fp';
+import {
+  get, assign, isNil, find,
+} from 'lodash/fp';
 import { remove } from 'lodash';
 import {
   build, buildSecret, buildDaemonset, buildCronjob,
@@ -8,6 +10,7 @@ import { transform as cronjobTransform } from './cronjobs/transformer';
 
 const kernels = [];
 const cronjobs = [];
+const secrets = [];
 
 export const createKernel = ({ pod, service, ingress }) => {
   const kernel = build({ pod });
@@ -43,8 +46,16 @@ export const getKernel = (name) => {
 };
 export const getKernels = () => Promise.resolve({ data: [transform({ metadata: { name: 'test' } })] });
 export const refreshDeployment = () => Promise.resolve({});
-export const upsertSecret = (name, body) => Promise.resolve(buildSecret({ ...body, name }));
-export const deleteSecret = name => Promise.resolve({ name });
+export const upsertSecret = (name, body) => {
+  const secret = buildSecret({ ...body, name });
+  secrets.push(secret);
+  return Promise.resolve(secret);
+};
+export const deleteSecret = (name) => {
+  remove(secrets, k => k.metadata.name === name);
+  return Promise.resolve({ name });
+};
+
 export const updateKernel = (name, body) => {
   const kernel = kernels.find(k => k.name === name);
   if (!kernel) return Promise.reject(new Error('Kernel Not Found'));
@@ -106,4 +117,10 @@ export const updateCronjob = (name, body) => {
     cronjob[k] = body[k];
   });
   return Promise.resolve(cronjob);
+};
+
+export const checkSecretExistence = (name) => {
+  const secret = find(k => k.metadata.name === name)(secrets);
+  if (isNil(secret)) return Promise.resolve(false);
+  return Promise.resolve(true);
 };

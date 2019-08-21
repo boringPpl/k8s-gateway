@@ -13,3 +13,6 @@ export const upsertSecret = (name, body) => {
 };
 
 export const deleteSecret = name => client.secrets(name).delete();
+
+export const checkSecretExistence = name => client.secrets(name).get()
+  .then(() => true).catch(() => false);

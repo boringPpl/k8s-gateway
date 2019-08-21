@@ -80,5 +80,39 @@ describe('V1', () => {
           .catch(done);
       });
     });
+
+    describe('Check existence', () => {
+      const dockerConfig = 'eyJhdXRocyI6eyJkb2NrZXIuaW8iOnsidXNlcm5hbWUiOiJ0dW5nIiwicGFzc3dvcmQiOiJ0dW5nIiwiZW1haWwiOiJ0dW5nQG1zdGFnZS5pbyJ9fX0=';
+
+      it('Found', (done) => {
+        const secretName = 'test4';
+        requester.put(`/v1/secrets/${secretName}`)
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
+          .send({ data: { '.dockerconfigjson': dockerConfig }, type: 'kubernetes.io/dockerconfigjson' })
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(200);
+            return requester.get(`/v1/secrets/${secretName}/exists`)
+              .set('X-Auth-Token', generateToken({ role: 'ADMIN' }));
+          })
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(200);
+            expect(res.body).to.be.true;
+            done();
+          })
+          .catch(done)
+          .finally(() => requester.delete(`/v1/secrets/${secretName}`));
+      });
+
+      it('Not found', (done) => {
+        requester.get('/v1/secrets/somthingshouldnotbefound/exists')
+          .set('X-Auth-Token', generateToken({ role: 'ADMIN' }))
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(200);
+            expect(res.body).to.be.false;
+            done();
+          })
+          .catch(done);
+      });
+    });
   });
 });
