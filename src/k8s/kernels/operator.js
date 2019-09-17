@@ -102,10 +102,10 @@ export const deleteKernel = (podName, options = {}) => {
   const { serviceName = podName, ingressName = podName } = options;
 
   return client.pods(podName).delete()
-    .finally(() => {
-      client.services(serviceName).delete().catch(console.log);
-      client.ingresses(ingressName).delete().catch(console.log);
-    });
+    .then(() => Promise.all([
+      client.services(serviceName).delete().catch(console.log),
+      client.ingresses(ingressName).delete().catch(console.log),
+    ]));
 };
 
 export const getKernel = (podName) => {
