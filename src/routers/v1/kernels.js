@@ -6,6 +6,7 @@ import { mustHave } from '../../auth/middlewares';
 import { buildAuthQuery } from '../../auth/query';
 import { writeSSEHeaders, sendSSEJSONData } from '../../utils/sse';
 import { addSelector } from '../../k8s/selector';
+import { validateUpdates } from '../../k8s/kernels/validator';
 
 const router = express.Router();
 if (process.env.CLOUD === 'yes') router.post('/', mustHave('CREATE'));
@@ -22,6 +23,7 @@ router.patch('/:name', (req, res) => {
   k8sClient.getKernel(req.params.name)
     .then((kernel) => {
       if (kernel.profileId !== req.user.profileId) throw new Error('Forbidden');
+      validateUpdates(kernel, req.body);
       return k8sClient.updateKernel(req.params.name, req.body);
     })
     .then(rs => res.json(rs))

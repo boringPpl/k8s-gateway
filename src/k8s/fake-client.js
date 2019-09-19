@@ -29,7 +29,7 @@ export const createKernel = ({ pod, service, ingress }) => {
     return Promise.reject(new Error('Missing Ingress Name'));
   }
 
-  const output = { ...transform(kernel.pod), phase: 'PENDING' };
+  const output = { ...transform(kernel.pod), phase: 'PENDING', startTime: Date.now() };
   kernels.push(output);
 
   return Promise.resolve(output);
