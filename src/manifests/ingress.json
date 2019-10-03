@@ -7,7 +7,7 @@
   "spec": {
     "rules": [],
     "tls": [{
-      "hosts": ["*.kernel.hasbrain.com"],
+      "hosts": ["*.kernel.flownote.ai"],
       "secretName": "kernel-tls"
     }]
   }

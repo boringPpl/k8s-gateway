@@ -19,4 +19,10 @@ router.delete('/:name', (req, res) => {
     .catch(err => res.status(422).json({ message: err.message }));
 });
 
+router.get('/:name/exists', (req, res) => {
+  k8sClient.checkSecretExistence(req.params.name)
+    .then(rs => res.json(rs))
+    .catch(err => res.status(422).json({ message: err.message }));
+});
+
 export default router;

@@ -87,12 +87,20 @@ export const getMetadata = flow(
   pick(['name', 'labels']),
 );
 
+const getStartTime = (obj) => {
+  const startTime = get('metadata.creationTimestamp')(obj);
+  if (!startTime) return null;
+  return new Date(startTime).getTime();
+};
+
 export const transform = kernel => ({
-  metadata: get('metadata')(kernel),
   profileId: get('metadata.labels.profileId')(kernel),
   name: get('metadata.name')(kernel),
   notebookPath: get('metadata.labels.notebookPath')(kernel),
   shutdownTime: getShutdownTime(kernel),
   token: get('metadata.labels.token')(kernel),
+  machineClusterTemplateId: get('metadata.labels.machineClusterTemplateId')(kernel),
+  imageId: get('metadata.labels.imageId')(kernel),
+  startTime: getStartTime(kernel),
   ...statusToPhase(kernel),
 });

@@ -20,6 +20,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => res.sendStatus(200));
+app.get('/healthz', (req, res) => res.sendStatus(200));
 
 app.use(authorize);
 

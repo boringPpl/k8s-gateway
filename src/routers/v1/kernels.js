@@ -1,16 +1,18 @@
 import express from 'express';
-import { flow, get, set } from 'lodash/fp';
+import { flow, set } from 'lodash/fp';
 
 import k8sClient from '../../k8s/client';
+import { mustHave } from '../../auth/middlewares';
 import { buildAuthQuery } from '../../auth/query';
 import { writeSSEHeaders, sendSSEJSONData } from '../../utils/sse';
 import { addSelector } from '../../k8s/selector';
+import { validateUpdates } from '../../k8s/kernels/validator';
 
 const router = express.Router();
+if (process.env.CLOUD === 'yes') router.post('/', mustHave('CREATE'));
 
 router.post('/', (req, res) => {
-  const profileId = get('user.profileId')(req);
-  const body = set('pod.metadata.labels.profileId', profileId)(req.body);
+  const body = set('pod.metadata.labels.profileId', req.user.profileId)(req.body);
 
   k8sClient.createKernel(body)
     .then(rs => res.json(rs))
@@ -18,13 +20,22 @@ router.post('/', (req, res) => {
 });
 
 router.patch('/:name', (req, res) => {
-  k8sClient.updateKernel(req.params.name, req.body)
+  k8sClient.getKernel(req.params.name)
+    .then((kernel) => {
+      if (kernel.profileId !== req.user.profileId) throw new Error('Forbidden');
+      validateUpdates(kernel, req.body);
+      return k8sClient.updateKernel(req.params.name, req.body);
+    })
     .then(rs => res.json(rs))
     .catch(err => res.status(422).json({ message: err.message }));
 });
 
 router.delete('/:name', (req, res) => {
-  k8sClient.deleteKernel(req.params.name, req.body)
+  k8sClient.getKernel(req.params.name)
+    .then((kernel) => {
+      if (kernel.profileId !== req.user.profileId) throw new Error('Forbidden');
+      return k8sClient.deleteKernel(req.params.name, req.body);
+    })
     .then(rs => res.json(rs))
     .catch(err => res.status(422).json({ message: err.message }));
 });

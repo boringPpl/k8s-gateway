@@ -44,6 +44,7 @@ export const cors = (req, res, next) => {
     'Origin, X-Requested-With, Content-Type, Accept, X-Auth-Token',
   );
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Vary', 'Origin');
 
   return next();
@@ -57,4 +58,22 @@ export const allow = roles => (req, res, next) => {
   } else {
     res.sendStatus(403);
   }
+};
+
+const getResourceFromPath = (expressPath) => {
+  if (!expressPath) return null;
+  const parts = expressPath.split('/').filter(i => i);
+  return parts[1];
+};
+
+export const mustHave = permission => (req, res, next) => {
+  const resource = getResourceFromPath(req.originalUrl);
+  const access = get('user.access')(req) || [];
+
+  const found = access.find(p => p.resource === resource);
+  if (!found || !found.permissions.includes(permission)) {
+    return res.sendStatus(403);
+  }
+
+  return next();
 };

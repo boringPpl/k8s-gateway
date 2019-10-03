@@ -1,6 +1,6 @@
 #!/bin/bash
 eval $(minikube docker-env)
-docker build -t k8s-gateway -f Dockerfile.minikube .
+docker build -t tungph/k8s-gateway -f Dockerfile.minikube .
 kubectl apply -f minimal-gateway.yaml
 sleep 2
 

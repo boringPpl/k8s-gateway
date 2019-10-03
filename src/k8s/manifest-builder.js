@@ -7,6 +7,7 @@ import {
   filter,
   pick,
   isNil,
+  omit,
 } from 'lodash/fp';
 import crypto from 'crypto';
 
@@ -30,19 +31,18 @@ const defaultNotebookArgs = [
 
 const generateToken = () => crypto.randomBytes(16).toString('hex');
 
+const unsafeKeys = ['serviceAccount', 'serviceAccountName', 'securityContext'];
+const enforceSecurity = omit(unsafeKeys);
+
 export const buildPod = ({ metadata, container, spec }) => {
-  const token = generateToken();
   const defaultLabels = get('metadata.labels')(defaultPod);
-  const labels = flow(
-    get('labels'),
-    assign(defaultLabels),
-    set('token', token),
-  )(metadata);
+  const labels = assign(defaultLabels, get('labels')(metadata));
+  if (!labels.token) labels.token = generateToken();
 
   const notebookArgs = flow(
     get('args'),
     concat(defaultNotebookArgs),
-    concat([`--NotebookApp.token=${token}`]),
+    concat([`--NotebookApp.token=${labels.token}`]),
     filter(i => i),
   )(container);
 
@@ -52,7 +52,10 @@ export const buildPod = ({ metadata, container, spec }) => {
     concat([]),
   )({ args: notebookArgs });
 
-  const newSpec = assign({ containers })(spec);
+  const newSpec = flow(
+    assign({ containers }),
+    enforceSecurity,
+  )(spec);
 
   return flow(
     set('metadata', assign(defaultPod.metadata)(metadata)),
@@ -85,10 +88,25 @@ export const buildService = ({
 };
 
 const ingressOption = (type, serviceName) => {
-  // haproxy
-  if (!type) return { rewriteKey: 'ingress.kubernetes.io/rewrite-target', rewrite: '/', path: `/${serviceName}` };
-  // nginx
-  return { rewriteKey: 'nginx.ingress.kubernetes.io/rewrite-target', rewrite: '/', path: `/${serviceName}(/|$)(.*)` };
+  switch (type) {
+    case 'nginx':
+      return {
+        annotations: {
+          'nginx.ingress.kubernetes.io/rewrite-target': '/$2',
+          'kubernetes.io/ingress.class': 'nginx',
+        },
+        path: `/${serviceName}(/|$)(.*)`,
+      };
+    // haproxy
+    default:
+      return {
+        annotations: {
+          'ingress.kubernetes.io/rewrite-target': '/',
+          'kubernetes.io/ingress.class': 'haproxy',
+        },
+        path: `/${serviceName}`,
+      };
+  }
 };
 
 export const buildIngress = ({
@@ -97,8 +115,8 @@ export const buildIngress = ({
   const serviceName = get('metadata.name')(service);
   const ingressMetadata = assign({ name: serviceName, annotations: {} })(metadata);
   const ruleExists = get('rules')(spec);
-  const { rewriteKey, rewrite, path } = ingressOption(ingressType, serviceName);
-  if (!ruleExists) ingressMetadata.annotations[rewriteKey] = rewrite;
+  const { annotations, path } = ingressOption(ingressType, serviceName);
+  if (!ruleExists) Object.assign(ingressMetadata.annotations, annotations);
 
   const servicePort = get('spec.ports[0].port')(service);
   const rule = {
@@ -172,16 +190,20 @@ export const buildDaemonset = ({
 };
 
 export const buildCronjob = ({
-  metadata, schedule, container,
+  metadata, schedule, container, spec,
 }) => {
   if (!container) throw new Error('Missing Cronjob Container');
 
   const defaultCronjobContainer = pick(['name', 'image', 'imagePullPolicy'])(defaultContainer);
   const newContainer = assign(defaultCronjobContainer)(container);
+  const newSpec = flow(
+    assign({ containers: [newContainer], restartPolicy: 'OnFailure' }),
+    enforceSecurity,
+  )(spec);
 
   return flow(
     set('metadata', metadata),
     set('spec.schedule', schedule),
-    set('spec.jobTemplate.spec.template.spec.containers[0]', newContainer),
+    set('spec.jobTemplate.spec.template.spec', newSpec),
   )(defaultCronjob);
 };

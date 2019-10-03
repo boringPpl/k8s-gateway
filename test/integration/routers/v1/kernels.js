@@ -13,15 +13,18 @@ describe('V1', () => {
             labels: {
               notebookPath: name,
               shutdownTime: (Date.now() + 10000).toString(),
+              token: '123',
             },
           },
           container: {
             image: 'jupyter/minimal-notebook',
             ports: [{ containerPort: 3000 }],
-            args: ['--NotebookApp.port=3000'],
+            args: ['--NotebookApp.port=3000', '--NotebookApp.allow_origin=https://hellya.kernel.flownote.ai'],
           },
           spec: {
-            securityContext: {},
+            securityContext: { tung: 'test' },
+            serviceAccount: 'flownote',
+            serviceAccountName: 'flownote',
             dnsPolicy: 'ClusterFirstWithHostNet',
             hostNetwork: true,
             imagePullSecrets: [{ name: 'tung' }],
@@ -32,7 +35,9 @@ describe('V1', () => {
           port: { port: 9999 },
         };
 
-        const ingress = {};
+        const ingress = {
+          host: 'shopee.kernel.hasbrain.com',
+        };
 
         requester.post('/v1/kernels')
           .send({ pod, service, ingress })
@@ -273,10 +278,15 @@ describe('V1', () => {
         };
 
         requester.post('/v1/kernels')
-          .set('X-Auth-Token', generateToken({ profileId: 'test7', role: 'MEMBER' }))
+          .set('X-Auth-Token', generateToken({
+            profileId: 'test7',
+            role: 'MEMBER',
+            access: [{ resource: 'kernels', permissions: ['CREATE'] }],
+          }))
           .send({ pod, service, ingress })
           .then((res) => {
             expect(res, getMessage(res)).to.have.status(200);
+
             return requester.get('/v1/kernels/watch')
               .set('X-Auth-Token', generateToken({ profileId: 'test7', role: 'MEMBER' }))
               .buffer(true)
