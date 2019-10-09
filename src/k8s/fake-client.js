@@ -5,8 +5,8 @@ import { remove } from 'lodash';
 import {
   build, buildSecret, buildDaemonset, buildCronjob,
 } from './manifest-builder';
-import { transform } from './kernels/transformer';
-import { transform as cronjobTransform } from './cronjobs/transformer';
+import { transform } from './kernels/decorator';
+import { transform as cronjobTransform } from './cronjobs/decorator';
 
 const kernels = [];
 const cronjobs = [];

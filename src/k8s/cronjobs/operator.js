@@ -4,7 +4,7 @@ import {
 
 import { client } from '../k8s-client';
 import { buildCronjob } from '../manifest-builder';
-import { transform } from './transformer';
+import { transform } from './decorator';
 
 export const createCronjob = (options) => {
   const cronjob = buildCronjob(options);
@@ -32,7 +32,8 @@ export const updateCronjob = (name, fields) => {
     spec: pick(allowedSpecs)(fields),
   };
 
-  return client.cronjobs(name).patch({ body: updates })
+  return client.cronjobs(name)
+    .patch({ body: updates })
     .then(({ body }) => transform(body));
 };
 

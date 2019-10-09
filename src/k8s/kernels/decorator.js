@@ -94,6 +94,7 @@ const getStartTime = (obj) => {
 };
 
 export const transform = kernel => ({
+  workspaceId: get('metadata.labels.workspaceId')(kernel),
   profileId: get('metadata.labels.profileId')(kernel),
   name: get('metadata.name')(kernel),
   notebookPath: get('metadata.labels.notebookPath')(kernel),

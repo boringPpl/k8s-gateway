@@ -12,7 +12,10 @@ const router = express.Router();
 if (process.env.CLOUD === 'yes') router.post('/', mustHave('CREATE'));
 
 router.post('/', (req, res) => {
-  const body = set('pod.metadata.labels.profileId', req.user.profileId)(req.body);
+  const body = flow(
+    set('pod.metadata.labels.workspaceId', req.user.workspaceId),
+    set('pod.metadata.labels.profileId', req.user.profileId),
+  )(req.body);
 
   k8sClient.createKernel(body)
     .then(rs => res.json(rs))
