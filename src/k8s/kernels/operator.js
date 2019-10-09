@@ -6,7 +6,7 @@ import { client } from '../k8s-client';
 import { build } from '../manifest-builder';
 import rollbackWaterFall from '../../utils/rollback-waterfall';
 import { updateKernelStatus } from '../../webhooks/flownote';
-import { transform } from './transformer';
+import { transform } from './decorator';
 
 const defaultStopPhases = ['DELETED', 'FAILED', 'SUCCEEDED', 'UNKNOWN'];
 

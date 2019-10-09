@@ -4,7 +4,7 @@ import {
 
 import { client } from '../k8s-client';
 import { buildDaemonset } from '../manifest-builder';
-import { transform } from '../kernels/transformer';
+import { transform } from '../kernels/decorator';
 
 const updateDaemonset = (body) => {
   const daemonsetBody = buildDaemonset(body);

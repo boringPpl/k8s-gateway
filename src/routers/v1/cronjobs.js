@@ -1,5 +1,5 @@
 import express from 'express';
-import { get, set } from 'lodash/fp';
+import { flow, set } from 'lodash/fp';
 
 import k8sClient from '../../k8s/client';
 import { buildAuthQuery } from '../../auth/query';
@@ -15,8 +15,10 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const profileId = get('user.profileId')(req);
-  const body = set('metadata.labels.profileId', profileId)(req.body);
+  const body = flow(
+    set('metadata.labels.workspaceId', req.user.workspaceId),
+    set('metadata.labels.profileId', req.user.profileId),
+  )(req.body);
 
   k8sClient.createCronjob(body)
     .then(rs => res.json(rs))

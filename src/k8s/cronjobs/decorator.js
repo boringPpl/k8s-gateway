@@ -1,7 +1,8 @@
 import { get } from 'lodash/fp';
-import { getShutdownTime } from '../kernels/transformer';
+import { getShutdownTime } from '../kernels/decorator';
 
 export const transform = cronjob => ({
+  workspaceId: get('metadata.labels.workspaceId')(cronjob),
   profileId: get('metadata.labels.profileId')(cronjob),
   name: get('metadata.name')(cronjob),
   suspend: get('spec.suspend')(cronjob) || false,
