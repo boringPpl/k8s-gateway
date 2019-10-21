@@ -294,9 +294,74 @@ describe('V1', () => {
               .set('X-Auth-Token', token)
               .buffer(true)
               .parse((resp) => {
+                let finished = false;
+
                 resp.on('data', (chunk) => {
                   const data = chunk.toString('utf8');
-                  if (data.includes('data: ')) done();
+
+                  if (data.includes('data: ') && !finished) {
+                    finished = true;
+                    done();
+                  }
+                });
+              });
+          })
+          .catch(done);
+      });
+    });
+
+    describe('Watch Single Pod', () => {
+      it('OK', (done) => {
+        const name = generateName('kernel') + Math.random().toString(36).substring(7);
+        const pod = {
+          metadata: {
+            name,
+            labels: {
+              notebookPath: name,
+            },
+          },
+          container: {
+            image: 'jupyter/minimal-notebook',
+          },
+        };
+
+        const service = {
+          port: { port: 9999 },
+        };
+
+        const ingress = {
+          host: 'shopee.kernel.hasbrain.com',
+          spec: {
+            tls: [],
+          },
+        };
+
+        const token = generateToken({
+          workspaceId: 'test',
+          profileId: 'test7',
+          role: 'MEMBER',
+          access: [{ resource: 'kernels', permissions: ['CREATE'] }],
+        });
+
+        requester.post('/v1/kernels')
+          .set('X-Auth-Token', token)
+          .send({ pod, service, ingress })
+          .then((res) => {
+            expect(res, getMessage(res)).to.have.status(200);
+
+            return requester.get(`/v1/kernels/${name}/watch`)
+              .set('X-Auth-Token', token)
+              .buffer(true)
+              .parse((resp) => {
+                let finished = false;
+
+                resp.on('data', (chunk) => {
+                  const data = chunk.toString('utf8');
+
+                  if (data.includes('data: ') && !finished) {
+                    finished = true;
+                    done();
+                  }
                 });
               });
           })

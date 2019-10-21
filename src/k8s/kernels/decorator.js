@@ -1,5 +1,7 @@
 import {
-  flow, get, pick, find, isMatch, isEqual, some, every,
+  flow, get, pick,
+  find, isMatch, isEqual,
+  some,
 } from 'lodash/fp';
 
 const podCondition = type => flow(
@@ -16,11 +18,6 @@ const podScheduled = flow(
 const podScheduledMessage = flow(
   podCondition('PodScheduled'),
   get('message'),
-);
-
-const imagePulled = flow(
-  get('containerStatuses'),
-  every(s => s.imageID),
 );
 
 const containersReady = flow(
@@ -68,11 +65,12 @@ export const statusToPhase = ({ type, status, metadata }) => {
     case 'Pending':
       if (!get('conditions')(status)) return { phase: 'PENDING' };
       if (!podScheduled(status)) return outOfResourcesPhase(status);
-      if (!imagePulled(status)) return { phase: 'PULLING_IMAGE' };
-      if (!containersReady(status)) return { phase: 'STARTING_CONTAINER', message: containersReadyMessage(status) };
+      if (!containersReady(status)) {
+        return { phase: 'CONTAINER_UNREADY', message: containersReadyMessage(status) };
+      }
       return { phase: 'EXPOSING' };
     case 'Running':
-      if (!containersReady(status)) return { phase: 'CONTAINER_ERROR', message: containersReadyMessage(status) };
+      if (!containersReady(status)) return { phase: 'CONTAINER_UNREADY', message: containersReadyMessage(status) };
       return { phase: 'RUNNING' };
     case 'Failed':
     case 'Succeeded':

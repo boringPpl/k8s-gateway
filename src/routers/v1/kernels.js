@@ -46,9 +46,7 @@ router.delete('/:name', (req, res) => {
 router.get('/:name/watch', (req, res) => {
   writeSSEHeaders(res);
 
-  k8sClient.watchKernel(req.params.name, {
-    onData: sendSSEJSONData(res),
-  })
+  k8sClient.watchKernel(req.params.name, { onData: sendSSEJSONData(res) })
     .then(stream => req.on('close', () => stream.destroy()))
     .catch((err) => {
       console.log(err);
@@ -76,8 +74,15 @@ router.get('/watch', (req, res) => {
 });
 
 router.get('/:name', (req, res) => {
-  k8sClient.getKernel(req.params.name)
-    .then(rs => res.json(rs))
+  const fields = `involvedObject.name=${req.params.name},involvedObject.kind=Pod`;
+
+  Promise.all([
+    k8sClient.getKernel(req.params.name),
+    k8sClient.getEvents({ fields }),
+  ])
+    .then(([kernel, events]) => {
+      res.json({ ...kernel, events });
+    })
     .catch(err => res.status(404).json({ message: err.message }));
 });
 

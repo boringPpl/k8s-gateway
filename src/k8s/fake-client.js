@@ -88,6 +88,14 @@ export const deleteDaemonset = (name) => {
   return Promise.resolve();
 };
 
+export const watchKernel = (name, { onData }) => {
+  const kernel = kernels[0];
+  if (!kernel) return Promise.reject(new Error('Kernel Not Found'));
+
+  onData(kernel);
+  return Promise.resolve({ destroy: () => {} });
+};
+
 export const watchKernels = ({ onData }) => {
   const kernel = kernels[0];
   if (!kernel) return Promise.reject(new Error('Kernel Not Found'));
@@ -124,3 +132,5 @@ export const checkSecretExistence = (name) => {
   if (isNil(secret)) return Promise.resolve(false);
   return Promise.resolve(true);
 };
+
+export const getEvents = () => Promise.resolve([]);

@@ -16,7 +16,7 @@ export const initK8sClient = () => {
   const clientApisAppsV1Beta2 = inClusterClient.apis.apps.v1beta2.namespaces(namespace);
   const clientApisBatchV1Beta1 = inClusterClient.apis.batch.v1beta1.namespaces(namespace);
 
-  // TODO: Must match ma nifest version
+  // TODO: Must match manifest version
   client.pods = clientApiV1Namespace.pods;
   client.services = clientApiV1Namespace.services;
   client.ingresses = clientApisExtensionsV1Beta1.ingresses;
@@ -26,6 +26,7 @@ export const initK8sClient = () => {
   client.daemonsets = clientApisAppsV1Beta2.daemonsets;
   client.nodes = clientApiV1.nodes;
   client.cronjobs = clientApisBatchV1Beta1.cronjobs;
+  client.events = clientApiV1Namespace.events;
 
   return client;
 };

@@ -195,3 +195,35 @@ export const watchKernels = (options) => {
       });
     }));
 };
+
+export const watchEvents = (options) => {
+  const {
+    fields, labels, onData, shouldDestroy,
+  } = options;
+
+  return client.watch
+    .events
+    .getObjectStream({
+      qs: {
+        fieldSelector: fields,
+        labelSelector: labels,
+      },
+    })
+    .then(stream => new Promise((resolve, reject) => {
+      let resolved = false;
+      stream.on('data', (event) => {
+        if (!resolved) {
+          resolved = true;
+          resolve(stream);
+        }
+
+        if (shouldDestroy && shouldDestroy(event)) stream.destroy();
+        onData(event);
+      });
+
+      stream.on('error', (err) => {
+        stream.destroy();
+        if (!resolved) reject(err);
+      });
+    }));
+};
