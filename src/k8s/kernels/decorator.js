@@ -91,6 +91,11 @@ const getStartTime = (obj) => {
   return new Date(startTime).getTime();
 };
 
+const notebookUrl = (obj) => {
+  const subdomain = get('metadata.labels.subdomain')(obj);
+  return `https://${subdomain}.${process.env.STATIC_DOMAIN}`;
+};
+
 export const transform = kernel => ({
   workspaceId: get('metadata.labels.workspaceId')(kernel),
   profileId: get('metadata.labels.profileId')(kernel),
@@ -101,5 +106,6 @@ export const transform = kernel => ({
   machineClusterTemplateId: get('metadata.labels.machineClusterTemplateId')(kernel),
   imageId: get('metadata.labels.imageId')(kernel),
   startTime: getStartTime(kernel),
+  notebookUrl: notebookUrl(kernel),
   ...statusToPhase(kernel),
 });

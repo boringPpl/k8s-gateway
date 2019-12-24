@@ -97,6 +97,13 @@ const ingressOption = (type, serviceName) => {
         },
         path: `/${serviceName}(/|$)(.*)`,
       };
+    case 'subdomain_nginx':
+      return {
+        annotations: {
+          'kubernetes.io/ingress.class': 'nginx',
+        },
+        path: '/',
+      };
     // haproxy
     default:
       return {

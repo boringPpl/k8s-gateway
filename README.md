@@ -1,6 +1,8 @@
 # Minikube
 Install Minikube
+
 kubectl apply -f service-account.yaml
+
 kubectl create secret generic flownote-key-pub --from-file=./test/secrets/key.pub -n hasbrain
 
 # Bash Script

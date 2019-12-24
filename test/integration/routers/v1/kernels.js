@@ -14,6 +14,7 @@ describe('V1', () => {
               notebookPath: name,
               shutdownTime: (Date.now() + 10000).toString(),
               token: '123',
+              subdomain: 'tung',
             },
           },
           container: {
@@ -37,6 +38,13 @@ describe('V1', () => {
 
         const ingress = {
           host: 'shopee.kernel.hasbrain.com',
+          ingressType: 'subdomain_nginx',
+          spec: {
+            tls: [{
+              hosts: ['tung.kernel.flownote.ai'],
+              secretName: 'kernel-tls',
+            }],
+          },
         };
 
         requester.post('/v1/kernels')
