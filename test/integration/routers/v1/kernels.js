@@ -26,9 +26,6 @@ describe('V1', () => {
             securityContext: { tung: 'test' },
             serviceAccount: 'flownote',
             serviceAccountName: 'flownote',
-            dnsPolicy: 'ClusterFirstWithHostNet',
-            hostNetwork: true,
-            imagePullSecrets: [{ name: 'tung' }],
           },
         };
 

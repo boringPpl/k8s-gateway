@@ -8,7 +8,7 @@ const getClient = () => {
 
   if (testEnvs.includes(NODE_ENV)) return FakeClient;
 
-  initK8sClient();
+  initK8sClient().then(() => console.log('LOADED K8S CLIENT SPEC'));
   return FlownoteClient;
 };
 

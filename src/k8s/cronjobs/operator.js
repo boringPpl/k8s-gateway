@@ -2,22 +2,24 @@ import {
   flow, pick, mapValues, get, toString,
 } from 'lodash/fp';
 
-import { client } from '../k8s-client';
+import { getClient } from '../k8s-client';
 import { buildCronjob } from '../manifest-builder';
 import { transform } from './decorator';
 
 export const createCronjob = (options) => {
   const cronjob = buildCronjob(options);
 
-  return client.cronjobs.post({ body: cronjob })
+  return getClient()
+    .then(client => client.cronjobs.post({ body: cronjob }))
     .then(({ body }) => transform(body));
 };
 
-export const deleteCronjob = name => client.cronjobs(name).delete({
-  qs: {
-    propagationPolicy: 'Background',
-  },
-});
+export const deleteCronjob = name => getClient()
+  .then(client => client.cronjobs(name).delete({
+    qs: {
+      propagationPolicy: 'Background',
+    },
+  }));
 
 export const updateCronjob = (name, fields) => {
   const allowedLabels = ['shutdownTime', 'suspend'];
@@ -32,28 +34,30 @@ export const updateCronjob = (name, fields) => {
     spec: pick(allowedSpecs)(fields),
   };
 
-  return client.cronjobs(name)
-    .patch({ body: updates })
+  return getClient()
+    .then(client => client.cronjobs(name).patch({ body: updates }))
     .then(({ body }) => transform(body));
 };
 
 export const getCronjobs = ({
   fields = '', labels = '', limit = 100,
-}) => client.cronjobs.get({
-  qs: {
-    fieldSelector: fields,
-    labelSelector: labels,
-    limit,
-  },
-})
+}) => getClient()
+  .then(client => client.cronjobs.get({
+    qs: {
+      fieldSelector: fields,
+      labelSelector: labels,
+      limit,
+    },
+  }))
   .then((resp) => {
     const items = get('body.items')(resp) || [];
     return { data: items.map(transform) };
   });
 
-export const cleanCronjobs = () => client.cronjobs.get({
-  qs: { labelSelector: 'suspend!=true', limit: 100 },
-})
+export const cleanCronjobs = () => getClient()
+  .then(client => client.cronjobs.get({
+    qs: { labelSelector: 'suspend!=true', limit: 100 },
+  }))
   .then((resp) => {
     const items = get('body.items')(resp) || [];
     const now = Date.now();

@@ -1,4 +1,4 @@
-import { client } from '../k8s-client';
+import { getClient } from '../k8s-client';
 
 export const refreshDeployment = (name) => {
   const updatedAt = Date.now().toString();
@@ -12,5 +12,5 @@ export const refreshDeployment = (name) => {
     },
   };
 
-  return client.deployments(name).patch({ body });
+  return getClient().then(client => client.deployments(name).patch({ body }));
 };

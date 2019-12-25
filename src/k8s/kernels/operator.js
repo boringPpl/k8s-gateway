@@ -2,7 +2,7 @@ import {
   get, assign, flow, pick, toString, mapValues,
 } from 'lodash/fp';
 
-import { client } from '../k8s-client';
+import { getClient } from '../k8s-client';
 import { build } from '../manifest-builder';
 import rollbackWaterFall from '../../utils/rollback-waterfall';
 import { updateKernelStatus } from '../../webhooks/flownote';
@@ -10,9 +10,8 @@ import { transform } from './decorator';
 
 const defaultStopPhases = ['DELETED', 'FAILED', 'SUCCEEDED', 'UNKNOWN'];
 
-export const watchKernel = (podName, { onData, shouldDestroy }) => client.watch
-  .pods(podName)
-  .getObjectStream()
+export const watchKernel = (podName, { onData, shouldDestroy }) => getClient()
+  .then(client => client.watch.pods(podName).getObjectStream())
   .then(stream => new Promise((resolve, reject) => {
     let resolved = false;
     stream.on('data', ({ type, object }) => {
@@ -40,11 +39,11 @@ export const createKernel = ({
   const startKernel = {
     exec: (kernel) => {
       Object.assign(kernel, build({ pod }));
-      return client.pods.post({ body: kernel.pod });
+      return getClient().then(client => client.pods.post({ body: kernel.pod }));
     },
     rollback: (kernel) => {
       const podName = get('pod.metadata.name')(kernel);
-      return client.pods(podName).delete();
+      return getClient().then(client => client.pods(podName).delete());
     },
   };
 
@@ -52,12 +51,12 @@ export const createKernel = ({
     exec: (kernel) => {
       if (!service) return Promise.resolve();
       Object.assign(kernel, build({ service: assign(service)(kernel) }));
-      return client.services.post({ body: kernel.service });
+      return getClient().then(client => client.services.post({ body: kernel.service }));
     },
     rollback: (kernel) => {
       if (!service) return Promise.resolve();
       const serviceName = get('service.metadata.name')(kernel);
-      return client.services(serviceName).delete();
+      return getClient().then(client => client.services(serviceName).delete());
     },
   };
 
@@ -65,12 +64,15 @@ export const createKernel = ({
     exec: (kernel) => {
       if (!ingress) return Promise.resolve(kernel);
       Object.assign(kernel, build({ ingress: assign(ingress)(kernel) }));
-      return client.ingresses.post({ body: kernel.ingress }).then(() => kernel);
+
+      return getClient()
+        .then(client => client.ingresses.post({ body: kernel.ingress }))
+        .then(() => kernel);
     },
     rollback: (kernel) => {
       if (!ingress) return Promise.resolve();
       const ingressName = get('ingress.metadata.name')(kernel);
-      return client.ingresses(ingressName).delete();
+      return getClient().then(client => client.ingresses(ingressName).delete());
     },
   };
 
@@ -99,9 +101,15 @@ export const createKernel = ({
 
 export const deleteKernel = (podName, options = {}) => {
   if (!podName) return Promise.reject(new Error('Missing Pod Name'));
-  const { serviceName = podName, ingressName = podName } = options;
 
-  return client.pods(podName).delete()
+  const { serviceName = podName, ingressName = podName } = options;
+  let client;
+
+  return getClient()
+    .then((c) => {
+      client = c;
+      return client.pods(podName).delete();
+    })
     .then(() => Promise.all([
       client.services(serviceName).delete().catch(console.log),
       client.ingresses(ingressName).delete().catch(console.log),
@@ -111,27 +119,30 @@ export const deleteKernel = (podName, options = {}) => {
 export const getKernel = (podName) => {
   if (!podName) return Promise.reject(new Error('Missing Pod Name'));
 
-  return client.pods(podName).get()
+  return getClient()
+    .then(client => client.pods(podName).get())
     .then(({ body }) => transform(body));
 };
 
 export const getKernels = ({
   fields = '', labels = '', limit = 100,
-}) => client.pods.get({
-  qs: {
-    fieldSelector: fields,
-    labelSelector: labels,
-    limit,
-  },
-})
+}) => getClient()
+  .then(client => client.pods.get({
+    qs: {
+      fieldSelector: fields,
+      labelSelector: labels,
+      limit,
+    },
+  }))
   .then((resp) => {
     const items = get('body.items')(resp) || [];
     return { data: items.map(transform) };
   });
 
-export const cleanKernels = () => client.pods.get({
-  qs: { labelSelector: 'type=KERNEL', limit: 100 },
-})
+export const cleanKernels = () => getClient()
+  .then(client => client.pods.get({
+    qs: { labelSelector: 'type=KERNEL', limit: 100 },
+  }))
   .then((resp) => {
     const items = get('body.items')(resp) || [];
     const now = Date.now();
@@ -159,7 +170,8 @@ export const updateKernel = (name, fields) => {
     },
   };
 
-  return client.pods(name).patch({ body: updates })
+  return getClient()
+    .then(client => client.pods(name).patch({ body: updates }))
     .then(({ body }) => transform(body));
 };
 
@@ -168,14 +180,13 @@ export const watchKernels = (options) => {
     fields, labels, onData, shouldDestroy,
   } = options;
 
-  return client.watch
-    .pods
-    .getObjectStream({
+  return getClient()
+    .then(client => client.watch.pods.getObjectStream({
       qs: {
         fieldSelector: fields,
         labelSelector: labels,
       },
-    })
+    }))
     .then(stream => new Promise((resolve, reject) => {
       let resolved = false;
       stream.on('data', ({ type, object }) => {
@@ -201,14 +212,13 @@ export const watchEvents = (options) => {
     fields, labels, onData, shouldDestroy,
   } = options;
 
-  return client.watch
-    .events
-    .getObjectStream({
+  return getClient()
+    .then(client => client.watch.events.getObjectStream({
       qs: {
         fieldSelector: fields,
         labelSelector: labels,
       },
-    })
+    }))
     .then(stream => new Promise((resolve, reject) => {
       let resolved = false;
       stream.on('data', (event) => {

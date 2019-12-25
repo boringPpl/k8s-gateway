@@ -39,12 +39,8 @@ export const buildPod = ({ metadata, container, spec }) => {
   const labels = assign(defaultLabels, get('labels')(metadata));
   if (!labels.token) labels.token = generateToken();
 
-  const notebookArgs = flow(
-    get('args'),
-    concat(defaultNotebookArgs),
-    concat([`--NotebookApp.token=${labels.token}`]),
-    filter(i => i),
-  )(container);
+  const tokenArg = [`--NotebookApp.token=${labels.token}`];
+  const notebookArgs = get('args')(container) || tokenArg.concat(defaultNotebookArgs);
 
   const containers = flow(
     assign(container),
@@ -70,7 +66,7 @@ export const buildService = ({
   const svcMetadata = assign({ name: get('metadata.name')(pod) })(metadata);
   const selector = flow(
     get('metadata.labels'),
-    pick(['notebookPath']),
+    pick(['subdomain']),
   )(pod);
   const targetPort = get('spec.containers[0].ports[0].containerPort')(pod);
   const ports = flow(
